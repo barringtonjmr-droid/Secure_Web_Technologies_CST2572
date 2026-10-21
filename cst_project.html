@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset = "utf-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Appointments</title>
+</head>  
+<body>
+    <h2>Login</h2>
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#appointment">Make an Appointment</a>
+        <a href="#health">Health Record</a>
+        <a href="#allhealth" hidden>View all health records</a>
+    </nav>
+    <section id="home" class="page">
+        <h2>Welcome to PrimeHealth</h2>
+        <p>Maybe About Us</p>
+    </section>
+
+    <section id="appointment" class="page" hidden>
+        <h2>Make an appointment</h2>
+        <p>If you would like to make an appointment with a doctor...</p>
+    </section>
+
+    <section id="health" class="page" hidden>
+        <h2>View your health record</h2>
+        <p></p>
+    </section>
+
+    <section id="allhealth" class="page" hidden>
+        <h2>Doctor's Dashboard</h2>
+        <p>View all patients records here</p>
+    </section>  
+
+<script>
+    const page = document.querySelectorAll(".page");
+
+    function route(){
+        const requestedPage = window.location.hash.slice(1) || "home";
+
+        page.forEach(function(page) {
+            page.hidden = page.id !== requestedPage;
+        });
+
+    }
+    window.addEventListener("hashchange", route);
+    route();   
+
+</script>
+</body>  
+</html>
+
+<!-- Do your code and compile at the end  -->
+
