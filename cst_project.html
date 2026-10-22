@@ -11,6 +11,7 @@
         <a href="#home">Home</a>
         <a href="#appointment">Make an Appointment</a>
         <a href="#health">Health Record</a>
+        <a href="#register">Registration</a>
         <a href="#allhealth" hidden>View all health records</a>
     </nav>
     <section id="home" class="page">
@@ -18,9 +19,34 @@
         <p>Maybe About Us</p>
     </section>
 
+    <section id="register" class="page" hidden>
+        <h2>Patient Registration</h2>
+
+        <form id="patientForm">
+            <label for="patientName">Full name</label>
+            <input id="patientName" name="name" required>
+
+            <label for="patientEmail">Email</label>
+            <input id="patientEmail" name="email" required>
+
+            <label for="patientPhone">Phone</label>
+            <input id="patientPhone" name="phone" tpye="tel" required>
+
+            <button type="submit">Register</button>
+
+        </form>
+
+        <p id="registerMessage" role="status"></p>
+    </section>
+
     <section id="appointment" class="page" hidden>
-        <h2>Make an appointment</h2>
-        <p>If you would like to make an appointment with a doctor...</p>
+        <h2>Appointments</h2>
+
+        <button id="loadAppointments">
+            Load Appointments
+        </button>
+        <p id="message"></p>
+        <div id="appointmentList"></div>
     </section>
 
     <section id="health" class="page" hidden>
@@ -33,21 +59,7 @@
         <p>View all patients records here</p>
     </section>  
 
-<script>
-    const page = document.querySelectorAll(".page");
-
-    function route(){
-        const requestedPage = window.location.hash.slice(1) || "home";
-
-        page.forEach(function(page) {
-            page.hidden = page.id !== requestedPage;
-        });
-
-    }
-    window.addEventListener("hashchange", route);
-    route();   
-
-</script>
+<script src="app.js"></script>
 </body>  
 </html>
 

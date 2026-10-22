@@ -1,3 +1,16 @@
+    const page = document.querySelectorAll(".page");
+
+    function route(){
+        const requestedPage = window.location.hash.slice(1) || "home";
+
+        page.forEach(function(page) {
+            page.hidden = page.id !== requestedPage;
+        });
+
+    }
+    window.addEventListener("hashchange", route);
+    route();
+
     const db_name = "MedicalAppointments";
     const db_version = 1;
 
@@ -115,3 +128,148 @@ async function getRecord(storeName, id){
     });
     
 }
+async function getALLRecords(storeName) {
+    const db = await openDatabase();
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transction(storeName,"readonly");
+        const request = tx.objectStore(storeName).getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+
+        tx.oncomplete = () => db.close();
+        tx.onerror = () => db.close();c
+
+    });
+
+}
+async function getRecord(storeName, id){
+    const db = await openDatabase();
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readonly");
+        const request = tx.objectStore(storeName).get(id);
+
+        request.onsucess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+
+        tx.oncomplete = () => db.close();
+        tx.onerror = () => db.close();
+    });
+    
+}
+async function addDoctor(name, speciality, email) {
+    return addRecord("doctors", {
+        name,
+        speciality,
+        email
+    });
+}
+async function addPatient(name, email, phone) {
+    return addRecord("patients", {
+        name,
+        phone,
+        email,
+    });
+}
+document
+    .getElementById("patientForm")
+    .addEventListener("submit", async function(event){
+        event.preventDefault();
+
+        const name = 
+            document.getElementById("patientName").value.trim();
+        const email = 
+            document.getElementById("patientEmail").value.trim();
+        const phone = 
+            document.getElementById("patientPhone").value.trim();
+        const message = 
+            document.getElementById("registerMessage");
+        
+            try {
+                await addPatient(name, email, phone);
+                message.textContent = "Patient registered successfully!";
+
+                this.reset();
+
+            } catch (error) {
+                console.error(error);
+                message.textContent = "Registration failed. Please try again.";
+            }
+    });
+async function createAppointment(
+    patientId,
+    doctorId,
+    date,
+    time
+) {
+    // Check that both records exist
+    const patient = await getRecord("patients", patientId);
+    const doctor = await getRecord("doctors", doctorId);
+
+    if(!patient || !doctor){
+        return "Patient or doctor not found";
+    }
+    return addRecord("appointments", {
+        patientId,
+        doctorId,
+        date,
+        time,
+        status: "pending",
+        createdAt: new Date().toISOString()
+    });
+}
+async function displayAppointments() {
+    const list = document.getElementById("appointmentList");
+    const message = document.getElementByUd("message");
+
+    list.replaceChildren();
+    message.textContent = "Loading...";
+
+    try {
+        const appointments = 
+            await getALLRecords("appointments");
+            
+        if(appointments.length === 0) {
+            message.textContent = "No appointments yet.";
+            return;
+        }
+
+        for(const appointment of appointments) {
+            const doctor = await getRecord(
+                "doctors",
+                appointment.doctorId
+            );
+            const patient = await getRecord(
+                "patients",
+                appointment.doctorId
+            );
+            
+            const item = document.createElement("article");
+            const heading = document.createElement("h3");
+            const details = document.createElement("p")
+            const status = document.createElement("p")
+
+            heading.textContent =
+            `${doctor?.name ?? "Unkown doctor"} - ` +
+            `${patient?.name ?? "Unkown Patient"}`;
+
+            details.textContent =  
+            `${appointment.date} at ${appointment.time}`;
+
+            status.textContent = 
+            `Status: ${appointment.status}`;
+
+            item.append(heading, details, status);
+            list.append(item);
+        }
+        message.textContent = "";
+    } catch (error) {
+        console.error(error);
+        message.textContent = "Could not load appointments.";
+    }
+}
+document  
+    .getElementById("loadAppointments")
+    .addEventListener("click", displayAppointments);
