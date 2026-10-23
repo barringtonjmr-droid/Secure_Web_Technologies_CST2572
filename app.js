@@ -15,13 +15,13 @@
     const db_version = 1;
 
     function openDatabase(){
-        return new Promise((resolve, result) => {
+        return new Promise((resolve, reject) => {
             const request = indexedDB.open(db_name, db_version)
 
             request.onupgradeneeded = () => {
                 const db = request.result;
                 
-            if (!db.objectStoresNames.contains(users)){
+            if (!db.objectStoreNames.contains("users")){
                 const store = db.createObjectStore("users", {
                     keyPath : "id",
                     autoIncrement: true
@@ -73,7 +73,7 @@ async function addRecord(storeName, record) {
     const db = await openDatabase();
 
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, readwrite);
+        const tx = db.transaction(storeName, "readwrite");
         const request = tx.objectStore(storeName).add(record);
 
         let id;
@@ -101,14 +101,14 @@ async function getALLRecords(storeName) {
     const db = await openDatabase();
 
     return new Promise((resolve, reject) => {
-        const tx = db.transction(storeName,"readonly");
+        const tx = db.transaction(storeName,"readonly");
         const request = tx.objectStore(storeName).getAll();
 
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
 
         tx.oncomplete = () => db.close();
-        tx.onerror = () => db.close();c
+        tx.onerror = () => db.close();
 
     });
 
@@ -120,45 +120,15 @@ async function getRecord(storeName, id){
         const tx = db.transaction(storeName, "readonly");
         const request = tx.objectStore(storeName).get(id);
 
-        request.onsucess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-
-        tx.oncomplete = () => db.close();
-        tx.onerror = () => db.close();
-    });
-    
-}
-async function getALLRecords(storeName) {
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transction(storeName,"readonly");
-        const request = tx.objectStore(storeName).getAll();
-
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
 
         tx.oncomplete = () => db.close();
-        tx.onerror = () => db.close();c
-
-    });
-
-}
-async function getRecord(storeName, id){
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readonly");
-        const request = tx.objectStore(storeName).get(id);
-
-        request.onsucess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-
-        tx.oncomplete = () => db.close();
         tx.onerror = () => db.close();
     });
     
 }
+
 async function addDoctor(name, speciality, email) {
     return addRecord("doctors", {
         name,
@@ -222,7 +192,7 @@ async function createAppointment(
 }
 async function displayAppointments() {
     const list = document.getElementById("appointmentList");
-    const message = document.getElementByUd("message");
+    const message = document.getElementById("message");
 
     list.replaceChildren();
     message.textContent = "Loading...";
@@ -243,7 +213,7 @@ async function displayAppointments() {
             );
             const patient = await getRecord(
                 "patients",
-                appointment.doctorId
+                appointment.patientId
             );
             
             const item = document.createElement("article");
