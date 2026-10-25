@@ -1,0 +1,8 @@
+body {
+    background-color:beige;
+    font-family: Arial, sans-serif;
+
+}
+.page[hidden]{
+    display: none !important;
+}
