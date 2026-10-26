@@ -12,68 +12,64 @@
     route();
 
     const db_name = "MedicalAppointments";
-    const db_version = 1;
+    const db_version = 2;
+      function openDatabase() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(db_name, db_version);
 
-    function openDatabase(){
-        return new Promise((resolve, result) => {
-            const request = indexedDB.open(db_name, db_version)
+        request.onupgradeneeded = () => {
+            const db = request.result;
 
-            request.onupgradeneeded = () => {
-                const db = request.result;
-                
-            if (!db.objectStoresNames.contains(users)){
-                const store = db.createObjectStore("users", {
-                    keyPath : "id",
+            if (!db.objectStoreNames.contains("users")) {
+                const usersStore = db.createObjectStore("users", {
+                    keyPath: "id",
                     autoIncrement: true
                 });
-                store.createIndex("email", "email", {
-                    unique : true
-
-                });
-
+                usersStore.createIndex("email", "email", { unique: true });
             }
-            if(!db.objectStoreNames.contains("doctors")) {
+
+            if (!db.objectStoreNames.contains("doctors")) {
                 db.createObjectStore("doctors", {
-                    keyPath : "id",
-                    autoIncrement : true
+                    keyPath: "id",
+                    autoIncrement: true
                 });
-            
             }
-             if(!db.objectStoreNames.contains("patients")) {
+
+            if (!db.objectStoreNames.contains("patients")) {
                 db.createObjectStore("patients", {
-                    keyPath : "id",
-                    autoIncrement : true
+                    keyPath: "id",
+                    autoIncrement: true
                 });
+            }
 
-
-        }
-         if(!db.objectStoreNames.contains("appointments")) {
-                db.createObjectStore("appointments", {
-                    keyPath : "id",
-                    autoIncrement : true
+            if (!db.objectStoreNames.contains("appointments")) {
+                const appointmentStore = db.createObjectStore("appointments", {
+                    keyPath: "id",
+                    autoIncrement: true
                 });
-                store.createIndex("doctorId", "doctorId");
-                store.createIndex("patientId", "patientId");
-                store.createIndex("date", "date");
-        
-    }
-     if(!db.objectStoreNames.contains("availability")) {
+                appointmentStore.createIndex("doctorId", "doctorId");
+                appointmentStore.createIndex("patientId", "patientId");
+                appointmentStore.createIndex("date", "date");
+            }
+
+            if (!db.objectStoreNames.contains("availability")) {
                 db.createObjectStore("availability", {
-                    keyPath : "id",
-                    autoIncrement : true
+                    keyPath: "id",
+                    autoIncrement: true
                 });
-        }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+            }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
     });
-} 
+}
 
 async function addRecord(storeName, record) {
     const db = await openDatabase();
 
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, readwrite);
+        const tx = db.transaction(storeName, "readwrite");
         const request = tx.objectStore(storeName).add(record);
 
         let id;
@@ -273,3 +269,44 @@ async function displayAppointments() {
 document  
     .getElementById("loadAppointments")
     .addEventListener("click", displayAppointments);
+
+   // * Habbani's encryption work*.
+   async function encryptData(data, password) {
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(JSON.stringify(data));
+    const keyMaterial = await window.crypto.subtle.importKey(
+        "raw",
+
+        encoder.encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+    );
+    // create a random value that need for secure incryption
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const key = await window.crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: salt,
+            iterations: 100000,
+            hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt"]
+    );
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const encryptedData = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        encodedData
+    ); 
+
+    // Keep the values needed for decryption.
+    return {
+        encryptedData: encryptedData,
+        salt: salt,
+        iv: iv
+    };
+}
