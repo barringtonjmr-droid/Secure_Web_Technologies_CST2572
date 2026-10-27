@@ -1,5 +1,4 @@
     const page = document.querySelectorAll(".page");
-
     function route(){
         const requestedPage = window.location.hash.slice(1) || "home";
 
@@ -12,30 +11,18 @@
     route();
 
     const db_name = "MedicalAppointments";
-    const db_version = 2;
-      function openDatabase() {
+  const db_version = 2;
+
+function openDatabase() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(db_name, db_version);
 
-<<<<<<< HEAD:app.js
         request.onupgradeneeded = () => {
             const db = request.result;
 
             if (!db.objectStoreNames.contains("users")) {
                 const usersStore = db.createObjectStore("users", {
                     keyPath: "id",
-=======
-    function openDatabase(){
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(db_name, db_version)
-
-            request.onupgradeneeded = () => {
-                const db = request.result;
-                
-            if (!db.objectStoreNames.contains("users")){
-                const store = db.createObjectStore("users", {
-                    keyPath : "id",
->>>>>>> origin/main:public/app.js
                     autoIncrement: true
                 });
                 usersStore.createIndex("email", "email", { unique: true });
@@ -163,11 +150,52 @@ document
             document.getElementById("patientEmail").value.trim();
         const phone = 
             document.getElementById("patientPhone").value.trim();
-        const message = 
+        const message = document.getElementById("registerMessage");
+        const password =
+    document.getElementById("patientPassword").value;
+const confirmPassword =
+    document.getElementById("confirmPatientPassword").value;
+
+if (password !== confirmPassword) {
+    message.textContent = "The passwords do not match.";
+    return;
+}
+const hasUpperCase = /[A-Z]/.test(password);
+const hasNumber = /[0-9]/.test(password);
+
+if (password.length < 8 || !hasUpperCase || !hasNumber) {
+    message.textContent =
+        "Password needs 8 characters, one capital letter and one number.";
+    return;
+}
             document.getElementById("registerMessage");
-        
+        // Habbani: basic validation and input cleaning.
+const safeName = name.replace(/[<>]/g, "").trim();
+const safeEmail = email.replace(/[<>]/g, "").trim().toLowerCase();
+const safePhone = phone.replace(/[^0-9+\s()-]/g, "").trim();
+
+if (safeName.length < 2) {
+    message.textContent = "Please enter a valid full name.";
+    return;
+}
+
+if (!safeEmail.includes("@") || !safeEmail.includes(".")) {
+    message.textContent = "Please enter a valid email address.";
+    return;
+}
+
+if (safePhone.length < 7) {
+    message.textContent = "Please enter a valid phone number.";
+    return;
+}
             try {
-                await addPatient(name, email, phone);
+             await addPatientWithEncryptedContact(
+    safeName,
+    safeEmail,
+    safePhone,
+    password
+); 
+                await loadAppointmentOptions();
                 message.textContent = "Patient registered successfully!";
 
                 this.reset();
@@ -183,7 +211,7 @@ async function createAppointment(
     date,
     time
 ) {
-    // Check that both records exist
+    // to Check that both records exist
     const patient = await getRecord("patients", patientId);
     const doctor = await getRecord("doctors", doctorId);
 
@@ -218,7 +246,6 @@ async function updateRecord(storeName, id, changes) {
                 return;
             }
 
-            //Keep existing fields unless updated
             updateRecord = {...existing, ...changes, id};
             store.put(updateRecord)
         };
@@ -390,7 +417,7 @@ document
 document  
     .getElementById("loadAppointments")
     .addEventListener("click", displayAppointments);
-
+    
    // * Habbani's encryption work*.
    async function encryptData(data, password) {
     const encoder = new TextEncoder();
@@ -424,10 +451,126 @@ document
         encodedData
     ); 
 
-    // Keep the values needed for decryption.
+    // to Keep the values needed for decryption.
     return {
         encryptedData: encryptedData,
         salt: salt,
         iv: iv
     };
 }
+async function addPatientWithEncryptedContact(name, email, phone, password) {
+    const encryptedContact = await encryptData(
+        { email: email, phone: phone },
+        password
+    );
+
+    return addRecord("patients", {
+        name: name,
+        encryptedContact: encryptedContact
+    });
+}
+// Habbani: decrypt data after it has been saved.
+async function decryptData(savedData, password) {
+    const encoder = new TextEncoder();
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+    );
+
+    const key = await window.crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: savedData.salt,
+            iterations: 100000,
+            hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+    );
+
+    const decryptedData = await window.crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: savedData.iv },
+        key,
+        savedData.encryptedData
+    );
+
+    const decodedData = new TextDecoder().decode(decryptedData);
+    return JSON.parse(decodedData);
+}
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword").value;
+    const message = document.getElementById("loginMessage");
+    const patients = await getALLRecords("patients");
+
+    let loggedInPatient = null;
+
+    for (const patient of patients) {
+        try {
+            const contact = await decryptData(patient.encryptedContact, password);
+
+            if (contact.email === email) {
+                loggedInPatient = patient;
+                break;
+            }
+        } catch (error) {
+            // This password did not unlock this patient's contact.
+        }
+    }
+
+    if (!loggedInPatient) {
+        message.textContent = "Email or password is incorrect.";
+        return;
+    }
+
+    sessionStorage.setItem("loggedInPatientId", loggedInPatient.id);
+    message.textContent = "Sign in successful.";
+    window.location.hash = "#home";
+});
+// Add one fictional doctor if the list is empty.
+async function addDemoDoctorIfNeeded() {
+    const doctors = await getALLRecords("doctors");
+
+    if (doctors.length === 0) {
+      await addDoctor(
+    "Demo Doctor",
+    "General Practice",
+    "doctor@example.test"
+);
+    }
+
+    await loadAppointmentOptions();
+}
+
+addDemoDoctorIfNeeded();
+let logoutTimer;
+
+function signOut() {
+    sessionStorage.removeItem("loggedInPatientId");
+    clearTimeout(logoutTimer);
+    document.getElementById("logoutButton").hidden = true;
+    window.location.hash = "#login";
+}
+
+function resetLogoutTimer() {
+    if (!sessionStorage.getItem("loggedInPatientId")) {
+        return;
+    }
+
+    clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(signOut, 30 * 60 * 1000);
+}
+
+document.getElementById("logoutButton").addEventListener("click", signOut);
+
+document.addEventListener("click", resetLogoutTimer);
+document.addEventListener("keydown", resetLogoutTimer);
+document.addEventListener("mousemove", resetLogoutTimer);
