@@ -6,3 +6,157 @@ body {
 .page[hidden]{
     display: none !important;
 }
+/* Habbani: simple styling for the project pages */
+body {
+    margin: 0;
+    background: #f3f6f8;
+    color: #24313b;
+    font-family: Arial, sans-serif;
+}
+
+body > h2 {
+    margin: 0;
+    padding: 22px 6%;
+    background: #176b67;
+    color: white;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 6%;
+    background: white;
+}
+
+nav a {
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #176b67;
+    text-decoration: none;
+}
+
+nav a:hover {
+    background: #e5f2f0;
+}
+
+.page[hidden] {
+    display: none !important;
+}
+
+.page:not([hidden]) {
+    max-width: 850px;
+    margin: 30px auto;
+    padding: 28px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 16px #24313b18;
+}
+
+.page h2 {
+    margin-top: 0;
+    color: #176b67;
+}
+
+.page form {
+    display: grid;
+    gap: 10px;
+    max-width: 480px;
+}
+
+.page input,
+.page select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #b9c5cc;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.page button {
+    width: fit-content;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: #176b67;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+.page button:hover {
+    background: #115451;
+}
+
+.page article {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #d9e2e6;
+    border-radius: 8px;
+}
+.home-intro {
+    padding: 24px 0;
+}
+
+.home-intro h1 {
+    color: #176b67;
+    font-size: 38px;
+    margin: 10px 0;
+}
+
+.home-actions,
+.home-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.home-actions a,
+.home-options a {
+    padding: 16px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+.home-actions a:first-child {
+    background: #176b67;
+    color: white;
+}
+
+.home-actions a:last-child {
+    border: 1px solid #176b67;
+    color: #176b67;
+}
+
+.home-options a {
+    flex: 1 1 200px;
+    background: #f3f6f8;
+    color: #24313b;
+}
+
+body > h2 {
+    margin: 0;
+    padding: 20px 6% 8px;
+}
+
+body > nav {
+    justify-content: flex-end;
+    padding: 8px 6% 18px;
+    background: #176b67;
+}
+
+body > nav a {
+    color: white;
+}
+
+body > nav a:hover {
+    background: #ffffff25;
+    color: white;
+}
+
+#home > h2,
+#home > p {
+    display: none;
+}

@@ -2,21 +2,51 @@
 <html lang="en">
 <head>
     <meta charset = "utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Appointments</title>
 </head>  
 <body>
-    <h2>Login</h2>
-    <nav>
+<h2><a href="#login">Login</a></h2>
+
+<section id="login" class="page" hidden>
+    <h2>Sign in</h2>
+    <form id="loginForm">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" required>
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" required>
+
+        <button type="submit">Sign in</button>
+        <p id="loginMessage" role="status"></p>
+    </form>
+    <p><a href="#register">New to PrimeHealth? Register here</a></p>
+</section>
+
+<nav> 
         <a href="#home">Home</a>
         <a href="#appointment">Make an Appointment</a>
         <a href="#health">Health Record</a>
-        <a href="#register">Registration</a>
-        <a href="#allhealth" hidden>View all health records</a>
-    </nav>
-    <section id="home" class="page">
-        <h2>Welcome to PrimeHealth</h2>
-        <p>Maybe About Us</p>
+        <a href="#allhealth">Doctor's Dashboard</a>
+    <p>Register and book an appointment with a doctor.</p>
+
+    <div class="home-actions">
+        <a href="#register">Register as a patient</a>
+        <a href="#appointment">Make an appointment</a>
+    </div>
+</div>
+
+<div class="home-options">
+    <a href="#appointment">
+        <h3>Appointments</h3>
+        <p>Choose a doctor and request a time.</p>
+    </a>
+
+    <a href="#health">
+        <h3>Health record</h3>
+        <p>Open the health record page.</p>
+    </a>
+</div>
     </section>
 
     <section id="register" class="page" hidden>
@@ -30,7 +60,11 @@
             <input id="patientEmail" name="email" required>
 
             <label for="patientPhone">Phone</label>
-            <input id="patientPhone" name="phone" tpye="tel" required>
+            <input id="patientPhone" name="phone" type="tel" required>
+            <label for="patientPassword">Password</label>
+            <input id="patientPassword" type="password" required>
+            <label for="confirmPatientPassword">Confirm password</label>
+            <input id="confirmPatientPassword" type="password" required>
 
             <button type="submit">Register</button>
 
@@ -76,7 +110,25 @@
     <section id="allhealth" class="page" hidden>
         <h2>Doctor's Dashboard</h2>
         <p>View all patients records here</p>
-    </section>  
+
+<form id="prescriptionForm">
+    <label for="prescriptionPatient">Patient</label>
+    <select id="prescriptionPatient" required>
+        <option value="">Choose a patient</option>
+    </select>
+    <label for="medicine">Medicine</label>
+    <input id="medicine" type="text" required>
+
+    <label for="dose">Dose</label>
+    <input id="dose" type="text" required>
+
+    <label for="instructions">Instructions</label>
+    <textarea id="instructions" required></textarea>
+
+    <button type="submit">Save prescription</button>
+    <p id="prescriptionMessage" role="status"></p>
+</form>
+ </section>  
 
 <script src="app.js"></script>
 </body>  
