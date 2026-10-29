@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | CarePoint</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>CarePoint</h2>
+        <p>Admin Dashboard</p>
+
+        <nav>
+            <a href="#overview">Overview</a>
+            <a href="#appointments">Appointments</a>
+            <a href="#accounts">Manage Accounts</a>
+            <a href="#booking">Book Appointment</a>
+        </nav>
+
+        <button id="logoutButton" type="button">Log out</button>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <h1>Dashboard Overview</h1>
+            <p>Manage users and appointments</p>
+        </header>
+
+        <section id="overview" class="stats">
+            <article class="stat-card">
+                <h3>Patients</h3>
+                <p id="patientCount">0</p>
+            </article>
+            <article class="stat-card">
+                <h3>Doctors</h3>
+                <p id="doctorCount">0</p>
+            </article>
+            <article class="stat-card">
+                <h3>Appointments</h3>
+                <p id="appointmentCount">0</p>
+            </article>
+            <article class="stat-card">
+                <h3>Cancelled</h3>
+                <p id="cancelledCount">0</p>
+            </article>
+        </section>
+
+        <section id="appointments" class="panel">
+            <h2>All Appointments</h2>
+            <p id="appointmentMessage" role="status"></p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentTableBody">
+                    <tr>
+                        <td colspan="7">
+                            Appointments will appear here.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="accounts" class="panel">
+            <h2>Manage Accounts</h2>
+            <p>Create patient or doctor accounts</p>
+
+            <button id="showAccountForm" type="button">
+                Create Account
+            </button>
+
+            <div id="accountFormContainer" hidden>
+                <form id="createAccountForm">
+                    <label for="accountRole">Account type</label>
+                    <select id="accountRole" required>
+                        <option value="patient">Patient</option>
+                        <option value="doctor">Doctor</option>
+                    </select>
+
+                    <label for="accountName">Full name</label>
+                    <input
+                        id="accountName"
+                        type="text"
+                        minlength="2"
+                        required
+                    >
+                    <label for="accountEmail">Email address</label>
+                    <input
+                        id="accountEmail"
+                        type="tel"
+                        required
+                    >
+                    
+                    <label for="accountPassword">Temporary password</label>
+                    <input
+                        id="accountPassword"
+                        type="password"
+                        minlength="8"
+                        required
+                    >
+
+                    <div id="doctorFields" hidden>
+                        <label for="doctorSpeciality">Speciality</label>
+                        <input
+                            id="doctorSpeciality"
+                            type="text"
+                        >
+                    </div>
+
+                    <button type="submit">Create Account</button>
+                    <button id="cancelAccountForm" type="button">Cancel</button>
+
+                    <p id="accountMessage" role="status"></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="booking" class="panel">
+            <h2>Book an Appointment</h2>
+            <p>The admin booking form will go here</p>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

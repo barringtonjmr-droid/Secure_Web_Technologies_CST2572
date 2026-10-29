@@ -45,19 +45,18 @@
                     autoIncrement : true
                 });
 
-
         }
          if(!db.objectStoreNames.contains("appointments")) {
-                db.createObjectStore("appointments", {
+                const appointmentStore = db.createObjectStore("appointments", {
                     keyPath : "id",
                     autoIncrement : true
                 });
-                store.createIndex("doctorId", "doctorId");
-                store.createIndex("patientId", "patientId");
-                store.createIndex("date", "date");
+                appointmentStore.createIndex("doctorId", "doctorId");
+                appointmentStore.createIndex("patientId", "patientId");
+                appointmentStore.createIndex("date", "date");
         
-    }
-     if(!db.objectStoreNames.contains("availability")) {
+        }
+        if(!db.objectStoreNames.contains("availability")) {
                 db.createObjectStore("availability", {
                     keyPath : "id",
                     autoIncrement : true
@@ -143,8 +142,11 @@ async function addPatient(name, email, phone) {
         email,
     });
 }
-document
-    .getElementById("patientForm")
+
+const patientForm = document.getElementById("patientForm");
+
+if (patientForm) {
+    patientForm
     .addEventListener("submit", async function(event){
         event.preventDefault();
 
@@ -211,6 +213,7 @@ document
                         message.textContent = "Registration failed. Please try again.";
                     }
     });
+}
         
 async function createAppointment(
     patientId,
@@ -378,8 +381,9 @@ async function displayAppointments() {
         message.textContent = "Could not load appointments.";
     }
 }
-document
-    .getElementById("appointmentForm")
+const appointmentForm = document.getElementById("appointmentForm");
+if (appointmentForm) {
+    appointmentForm
     .addEventListener("submit", async function(event) {
         event.preventDefault();
 
@@ -421,7 +425,7 @@ document
             message.textContent = "Could not create appointment.";
         }
     });
-
+}
 
 async function encryptData(data, password) {
     const encoder = new TextEncoder();
@@ -509,8 +513,10 @@ async function decryptData(savedData, password) {
     const decodedData = new TextDecoder().decode(decryptedData);
     return JSON.parse(decodedData);
 }
-
-document.getElementById("loginForm").addEventListener("submit", async function(event) {
+const loginForm = document.getElementById("loginForm");
+if (loginForm) {
+    loginForm
+    .addEventListener("submit", async function(event) {
     event.preventDefault();
 
     const email = document.getElementById("loginEmail").value.trim().toLowerCase();
@@ -542,6 +548,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     message.textContent = "Sign in successful.";
     window.location.hash = "#home";
 });
+}
 
 let logoutTimer;
 
@@ -560,10 +567,10 @@ function resetLogoutTimer() {
     clearTimeout(logoutTimer);
     logoutTimer = setTimeout(signOut, 30 * 60 * 1000);
 }
-
-document  
-    .getElementById("loadAppointments")
-    .addEventListener("click", displayAppointments);
+const loadAppointmentsButton = document.getElementById("loadAppointments");
+if (loadAppointmentsButton) {
+    loadAppointmentsButton.addEventListener("click", displayAppointments);
+}
 document.getElementById("logoutButton").addEventListener("click", signOut);
 
 document.addEventListener("click", resetLogoutTimer);
