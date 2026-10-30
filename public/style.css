@@ -156,6 +156,11 @@ body > nav a:hover {
     color: white;
 }
 
+body > h2 a {
+    color: white;
+    text-decoration: none;
+}
+
 #home > h2,
 #home > p {
     display: none;

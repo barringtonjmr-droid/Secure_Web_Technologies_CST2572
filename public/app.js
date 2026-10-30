@@ -427,91 +427,35 @@ if (appointmentForm) {
     });
 }
 
+// Habbani: AES-256-GCM encryption using the browser's Web Crypto API
+async function makeKey(password, salt) {
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    );
+}
+
 async function encryptData(data, password) {
-    const encoder = new TextEncoder();
-    const encodedData = encoder.encode(JSON.stringify(data));
-    const keyMaterial = await window.crypto.subtle.importKey(
-        "raw",
-
-        encoder.encode(password),
-        { name: "PBKDF2" },
-        false,
-        ["deriveKey"]
-    );
-    // create a random value that need for secure incryption
-    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    const key = await window.crypto.subtle.deriveKey(
-        {
-            name: "PBKDF2",
-            salt: salt,
-            iterations: 100000,
-            hash: "SHA-256"
-        },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["encrypt"]
-    );
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const encryptedData = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        key,
-        encodedData
-    ); 
-
-    // to Keep the values needed for decryption.
-    return {
-        encryptedData: encryptedData,
-        salt: salt,
-        iv: iv
-    };
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await makeKey(password, salt);
+    const text = new TextEncoder().encode(JSON.stringify(data));
+    const encryptedData = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, text);
+    return { encryptedData, salt, iv };
 }
 
 async function addPatientWithEncryptedContact(name, email, phone, password) {
-    const encryptedContact = await encryptData(
-        { email: email, phone: phone },
-        password
-    );
-
-    return addRecord("patients", {
-        name: name,
-        encryptedContact: encryptedContact
-    });
+    const encryptedContact = await encryptData({ email, phone }, password);
+    return addRecord("patients", { name, encryptedContact });
 }
 
-// Habbani: decrypt data after it has been saved.
 async function decryptData(savedData, password) {
-    const encoder = new TextEncoder();
-
-    const keyMaterial = await window.crypto.subtle.importKey(
-        "raw",
-        encoder.encode(password),
-        { name: "PBKDF2" },
-        false,
-        ["deriveKey"]
-    );
-
-    const key = await window.crypto.subtle.deriveKey(
-        {
-            name: "PBKDF2",
-            salt: savedData.salt,
-            iterations: 100000,
-            hash: "SHA-256"
-        },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["decrypt"]
-    );
-
-    const decryptedData = await window.crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: savedData.iv },
-        key,
-        savedData.encryptedData
-    );
-
-    const decodedData = new TextDecoder().decode(decryptedData);
-    return JSON.parse(decodedData);
+    const key = await makeKey(password, savedData.salt);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: savedData.iv }, key, savedData.encryptedData);
+    return JSON.parse(new TextDecoder().decode(plain));
 }
 const loginForm = document.getElementById("loginForm");
 if (loginForm) {
@@ -531,7 +475,7 @@ if (loginForm) {
             const contact = await decryptData(patient.encryptedContact, password);
 
             if (contact.email === email) {
-                loggedInPatient = patient;
+                loggedInPatient = { ...patient, ...contact };
                 break;
             }
         } catch (error) {
@@ -546,7 +490,9 @@ if (loginForm) {
 
     sessionStorage.setItem("loggedInPatientId", loggedInPatient.id);
     message.textContent = "Sign in successful.";
-    window.location.hash = "#home";
+    document.querySelector("#health p").textContent =
+        `Name: ${loggedInPatient.name} | Email: ${loggedInPatient.email} | Phone: ${loggedInPatient.phone}`;
+    window.location.hash = "#health";
 });
 }
 
