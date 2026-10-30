@@ -7,7 +7,18 @@
     <title>Appointments</title>
 </head>  
 <body>
-<h2><a href="#login">Login</a></h2>
+<h2><a href="#home">PrimeHealth</a></h2>
+
+<nav>
+
+    <a href="#home">Home</a>
+    <a href="#appointment">Make an Appointment</a>
+    <a href="#health">Health Record</a>
+    <a href="#register">Registration</a>
+    <a href="#login">Login</a>
+    <a href="#allhealth">Doctor's Dashboard</a>
+</nav>
+ <button id="logoutButton" hidden>Log out</button>
 
 <section id="login" class="page" hidden>
     <h2>Sign in</h2>
@@ -23,38 +34,35 @@
     <p><a href="#register">New to PrimeHealth? Register here</a></p>
 </section>
 
-<nav>
-    <a href="#home">Home</a>
-    <a href="#appointment">Make an Appointment</a>
-    <a href="#health">Health Record</a>
-    <a href="#register">Registration</a>
-    <a href="#allhealth">Doctor's Dashboard</a>
-</nav>
-
 <section id="home" class="page">
     <div class="home-intro">
         <p>WELCOME TO PRIMEHEALTH</p>
         <h1>Healthcare, made simpler.</h1>
         <p>Register and book an appointment with a doctor.</p>
 
-    <div class="home-actions">
-        <a href="#register">Register as a patient</a>
-        <a href="#appointment">Make an appointment</a>
+        <div class="home-actions">
+            <a href="#register">Register as a patient</a>
+            <a href="#appointment">Make an appointment</a>
+        </div>
     </div>
-</div>
 
-<div class="home-options">
-    <a href="#appointment">
-        <h3>Appointments</h3>
-        <p>Choose a doctor and request a time.</p>
-    </a>
+    <div class="home-options">
+        <a href="#health">
+            <h3>Health record</h3>
+            <p>View your personal health information.</p>
+        </a>
 
-    <a href="#health">
-        <h3>Health record</h3>
-        <p>Open the health record page.</p>
-    </a>
-</div>
-    </section>
+        <div class="privacy-card">
+            <h3>Your privacy</h3>
+            <p>Your contact details are encrypted with AES-256-GCM. Only you can unlock them with your password.</p>
+        </div>
+    </div>
+
+    <footer class="home-footer">
+        <p>&copy; 2026 PrimeHealth &mdash; CST2572 Secure Web Technologies, Middlesex University London</p>
+        <p>All patient data is stored locally in your browser using IndexedDB. No data is sent to external servers.</p>
+    </footer>
+</section>
 
     <section id="register" class="page" hidden>
         <h2>Patient Registration</h2>

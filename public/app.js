@@ -1,13 +1,20 @@
     const page = document.querySelectorAll(".page");
 
-    function route(){
+       function route(){
         const requestedPage = window.location.hash.slice(1) || "home";
+
+        // Habbani: protect pages that need login
+        const protectedPages = ["appointment", "health"];
+        if (protectedPages.includes(requestedPage) && !sessionStorage.getItem("loggedInPatientId")) {
+            window.location.hash = "#login";
+            return;
+        }
 
         page.forEach(function(page) {
             page.hidden = page.id !== requestedPage;
         });
 
-    }
+    } 
     window.addEventListener("hashchange", route);
     route();
 
@@ -187,33 +194,41 @@ if (patientForm) {
             return;
         }
 
-        if (!safeEmail.includes("@") || !safeEmail.includes(".")) {
+              // Habbani: proper email format check using regex
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(safeEmail)) {
             message.textContent = "Please enter a valid email address.";
             return;
-        }
+        }  
 
-        if (safePhone.length < 7) {
+          if (safePhone.length < 7) {
             message.textContent = "Please enter a valid phone number.";
             return;
         }
-                    try {
-                    await addPatientWithEncryptedContact(
-            safeName,
-            safeEmail,
-            safePhone,
-            password
-        ); 
-                        await loadAppointmentOptions();
-                        message.textContent = "Patient registered successfully!";
 
-                        this.reset();
+         try {
+            // Habbani: hash the password with PBKDF2 for storage (criterion 30)
+            const hashSalt = crypto.getRandomValues(new Uint8Array(16));
+            const hashKey = await crypto.subtle.importKey(
+                "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
+            );
+            const hashBits = await crypto.subtle.deriveBits(
+                { name: "PBKDF2", salt: hashSalt, iterations: 100000, hash: "SHA-256" },
+                hashKey, 256
+            );
+            const passwordHash = { hash: new Uint8Array(hashBits), salt: hashSalt };
 
-                    } catch (error) {
-                        console.error(error);
-                        message.textContent = "Registration failed. Please try again.";
-                    }
+            await addPatientWithEncryptedContact(safeName, safeEmail, safePhone, password, passwordHash);
+            await loadAppointmentOptions();
+            message.textContent = "Patient registered successfully!";
+            this.reset();
+
+        } catch (error) {
+            console.error(error);
+            message.textContent = "Registration failed. Please try again.";
+        }
     });
-}
+}   
         
 async function createAppointment(
     patientId,
@@ -447,9 +462,9 @@ async function encryptData(data, password) {
     return { encryptedData, salt, iv };
 }
 
-async function addPatientWithEncryptedContact(name, email, phone, password) {
+async function addPatientWithEncryptedContact(name, email, phone, password, passwordHash) {
     const encryptedContact = await encryptData({ email, phone }, password);
-    return addRecord("patients", { name, encryptedContact });
+    return addRecord("patients", { name, encryptedContact, passwordHash });
 }
 
 async function decryptData(savedData, password) {
