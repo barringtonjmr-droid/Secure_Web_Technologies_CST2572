@@ -7,13 +7,74 @@
     <title>Appointments</title>
 </head>  
 <body>
-<h2><a href="#login">Login</a></h2>
+<!--Public naviagation-->
+    <nav> 
+        <a href="#home">Home</a>
+        <a href="#about">About Us</a>
+        <a href="#contact">Contact</a>
+        <a href="#login">Login</a>
+        <a href="#register">Register</a>
+    </nav>
+
+<!--Public home page-->
+<section id="home" class="page">
+    <div class="home-intro">
+        <h1>Welcome to Primehealth</h1>
+
+        <p>
+            Your health is our priority.
+            Register with PrimeHealth and access
+            convenient healthcare services.
+        </p>
+
+        <div class="home-actions">
+            <a href="#register">Register as a patient</a>
+            <a href="#login">Sign in</a>
+        </div>
+    </div>
+
+    <div class="home-options">
+        <a href="#about">
+            <h3>About PrimeHealth</h3>
+            <p>Learn more about our healthcare services.</p>
+        </a>
+
+        <a href="#contact">
+            <h3>Contact Us</h3>
+            <p>Find out how to get in touch with us</p>
+        </a>
+    </div>
+</section>
+
+<!--About page-->
+<section id="about" class="page" hidden>
+    <h2>About PrimeHealth</h2>
+    <p>
+        PrimeHealth is a healthcare appointment platform
+        desgined to make accessing healthcare services
+        more convenient.
+    </p>
+</section>
+
+<!--Contact page-->
+<section id="contact" class="page" hidden>
+    <h2>Contact Us</h2>
+    <p>For enquiries, please contact PrimeHealth.</p>
+    <p>Email: info@primehealth.test</p>
+</section>
 
 <section id="login" class="page" hidden>
-    <h2>Sign in</h2>
+    <h2>Sign in to Primehealth</h2>
     <form id="loginForm">
+        <label for="loginRole">I am signing in as</label>
+        <select id="loginRole" required>
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="admin">Admin</option>
+        </select>
         <label for="loginEmail">Email</label>
         <input id="loginEmail" type="email" required>
+        
         <label for="loginPassword">Password</label>
         <input id="loginPassword" type="password" required>
 
@@ -23,33 +84,7 @@
     <p><a href="#register">New to PrimeHealth? Register here</a></p>
 </section>
 
-<nav> 
-        <a href="#home">Home</a>
-        <a href="#appointment">Make an Appointment</a>
-        <a href="#health">Health Record</a>
-        <a href="#allhealth">Doctor's Dashboard</a>
-    <p>Register and book an appointment with a doctor.</p>
-
-    <div class="home-actions">
-        <a href="#register">Register as a patient</a>
-        <a href="#appointment">Make an appointment</a>
-    </div>
-</div>
-
-<div class="home-options">
-    <a href="#appointment">
-        <h3>Appointments</h3>
-        <p>Choose a doctor and request a time.</p>
-    </a>
-
-    <a href="#health">
-        <h3>Health record</h3>
-        <p>Open the health record page.</p>
-    </a>
-</div>
-    </section>
-
-    <section id="register" class="page" hidden>
+<section id="register" class="page" hidden>
         <h2>Patient Registration</h2>
 
         <form id="patientForm">
@@ -73,7 +108,7 @@
         <p id="registerMessage" role="status"></p>
     </section>
 
-    <section id="appointment" class="page" hidden>
+<section id="appointment" class="page" hidden>
         <h2>Appointments</h2>
         <form id="appointmentForm">
             <label for="appointmentPatient">Patient</label>
@@ -105,33 +140,10 @@
     <section id="health" class="page" hidden>
         <h2>View your health record</h2>
         <p></p>
-    </section>
-
-    <section id="allhealth" class="page" hidden>
-        <h2>Doctor's Dashboard</h2>
-        <p>View all patients records here</p>
-
-<form id="prescriptionForm">
-    <label for="prescriptionPatient">Patient</label>
-    <select id="prescriptionPatient" required>
-        <option value="">Choose a patient</option>
-    </select>
-    <label for="medicine">Medicine</label>
-    <input id="medicine" type="text" required>
-
-    <label for="dose">Dose</label>
-    <input id="dose" type="text" required>
-
-    <label for="instructions">Instructions</label>
-    <textarea id="instructions" required></textarea>
-
-    <button type="submit">Save prescription</button>
-    <p id="prescriptionMessage" role="status"></p>
-</form>
- </section>  
+</section>
 
 <script src="app.js"></script>
-</body>  
-</html>
+</body>
+   
 
 <!-- Do your code and compile at the end  -->

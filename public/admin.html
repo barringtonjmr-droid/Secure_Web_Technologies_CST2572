@@ -97,13 +97,21 @@
                         minlength="2"
                         required
                     >
+                    <label for="accountPhone">Phone number</label>
+                    <input
+                        id="accountPhone"
+                        type="tel"
+                        placeholder="Enter phone number"
+                        required
+                    >
+
                     <label for="accountEmail">Email address</label>
                     <input
                         id="accountEmail"
                         type="tel"
                         required
                     >
-                    
+
                     <label for="accountPassword">Temporary password</label>
                     <input
                         id="accountPassword"
@@ -127,6 +135,28 @@
                 </form>
             </div>
         </section>
+        <hr>
+
+        <h2>Reset Doctor Password</h2>
+
+        <form id="resetDoctorPasswordForm">
+            <label for="resetDoctorSelect">Select doctor</label>
+            <select id="resetDoctorSelect" required>
+                <option value="">Choose a doctor</option>
+            </select>
+
+            <label for="newDoctorPassword">New password</label>
+            <input
+                id="newDoctorPassword"
+                type="password"
+                minlength="8"
+                required
+            >
+
+            <button type="submit">Reset Password</button>
+
+            <p id="resetPasswordMessage" role="status"></p>
+        </form>
 
         <section id="booking" class="panel">
             <h2>Book an Appointment</h2>
