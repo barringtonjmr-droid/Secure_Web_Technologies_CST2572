@@ -160,3 +160,23 @@ body > nav a:hover {
 #home > p {
     display: none;
 }
+.privacy-card {
+    flex: 1 1 200px;
+    padding: 16px;
+    border-radius: 8px;
+    background: #e5f2f0;
+    color: #24313b;
+}
+
+.privacy-card summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 17px;
+    color: #176b67;
+}
+
+.privacy-card p {
+    margin: 10px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+}

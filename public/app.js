@@ -506,8 +506,7 @@ async function encryptData(data, password) {
     return { encryptedData, salt, iv };
 }
 
-
-async function addPatientWithEncryptedContact(name, email, phone, password) {
+async function addPatientWithEncryptedContact(name, email, phone, password, passwordHash) {
     const encryptedContact = await encryptData(
         { email: email, phone: phone },
         password
@@ -515,7 +514,8 @@ async function addPatientWithEncryptedContact(name, email, phone, password) {
 
     return addRecord("patients", {
         name: name,
-        encryptedContact: encryptedContact
+        encryptedContact: encryptedContact,
+        passwordHash: passwordHash
     });
 }
 
