@@ -1,5 +1,5 @@
 const pages = document.querySelectorAll(".page");
-
+// Habbani: route guard - blocks the appointment and health pages unless logged in (criterion 26)
 function route() {
     const requestedPage = window.location.hash.slice(1) || "home";
 
@@ -182,7 +182,6 @@ async function loadAppointmentOptions() {
     });
 
 }
-
 async function makeKey(password, salt) {
     const keyMaterial = await crypto.subtle.importKey(
         "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
@@ -192,7 +191,7 @@ async function makeKey(password, salt) {
         keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
     );
 }
-
+// Habbani: encrypts data with AES-256-GCM using a random salt and IV (criterion 29)
 async function encryptData(data, password) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -201,9 +200,8 @@ async function encryptData(data, password) {
     const encryptedData = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, text);
     return { encryptedData, salt, iv };
 }
-
-
-async function addPatientWithEncryptedContact(name, email, phone, password) {
+// Habbani: stores the patient with encrypted contact details and a hashed password (criterion 30)
+async function addPatientWithEncryptedContact(name, email, phone, password, passwordHash) {
     const encryptedContact = await encryptData(
         { email, phone },
         password
