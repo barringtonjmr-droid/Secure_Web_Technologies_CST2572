@@ -27,261 +27,6 @@ function route() {
 window.addEventListener("hashchange", route);
 route();
 
-
-const db_name = "MedicalAppointments";
-const db_version = 1;
-
-    function openDatabase(){
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(db_name, db_version)
-
-            request.onupgradeneeded = () => {
-                const db = request.result;
-                
-            if (!db.objectStoreNames.contains("users")){
-                const store = db.createObjectStore("users", {
-                    keyPath : "id",
-                    autoIncrement: true
-                });
-                store.createIndex("email", "email", {
-                    unique : true
-
-                });
-
-            }
-            if(!db.objectStoreNames.contains("doctors")) {
-                db.createObjectStore("doctors", {
-                    keyPath : "id",
-                    autoIncrement : true
-                });
-            
-            }
-             if(!db.objectStoreNames.contains("patients")) {
-                db.createObjectStore("patients", {
-                    keyPath : "id",
-                    autoIncrement : true
-                });
-
-        }
-         if(!db.objectStoreNames.contains("appointments")) {
-                const appointmentStore = db.createObjectStore("appointments", {
-                    keyPath : "id",
-                    autoIncrement : true
-                });
-                appointmentStore.createIndex("doctorId", "doctorId");
-                appointmentStore.createIndex("patientId", "patientId");
-                appointmentStore.createIndex("date", "date");
-        
-        }
-        if(!db.objectStoreNames.contains("availability")) {
-                db.createObjectStore("availability", {
-                    keyPath : "id",
-                    autoIncrement : true
-                });
-        }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    });
-} 
-
-async function addRecord(storeName, record) {
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readwrite");
-        const request = tx.objectStore(storeName).add(record);
-
-        let id;
-
-        request.onsuccess = () => {
-            id = request.result;
-
-        };
-        
-        tx.oncomplete = () => {
-            db.close();
-            resolve(id);
-        };
-        tx.onerror = () => {
-            db.close();
-            reject(tx.error);
-        };
-        tx.onabort = () => {
-            db.close();
-            reject(tx.error);
-        };
-    });
-}
-async function getALLRecords(storeName) {
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName,"readonly");
-        const request = tx.objectStore(storeName).getAll();
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-
-        tx.oncomplete = () => db.close();
-        tx.onerror = () => db.close();
-
-    });
-
-}
-async function getRecord(storeName, id){
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readonly");
-        const request = tx.objectStore(storeName).get(id);
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-
-        tx.oncomplete = () => db.close();
-        tx.onerror = () => db.close();
-    });
-    
-}
-
-async function addDoctor(name, speciality, email, phone, password) {
-    const passwordData = await hashPassowrd(password);
-
-    return addRecord("doctors", {
-        name: name,
-        speciality: speciality,
-        email: email.toLowerCase(),
-        phone: phone,
-        passwordSalt: passwordData.salt,
-        passwordHash: passwordData.hash
-    });
-}
-async function addPatient(name, email, phone) {
-    return addRecord("patients", {
-        name,
-        phone,
-        email,
-    });
-}
-
-async function createInitialAdmin(name, email, password) {
-    const users = await getALLRecords("users");
-
-    if (users.some(user => user.role === "admin")) {
-        throw new Error("An admin account already exists.");
-    }
-
-    const passwordData = await hashPassowrd(password);
-
-    return addRecord("users", {
-        name,
-        email: email.toLowerCase(),
-        role: "admin",
-        passwordSalt: passwordData.salt,
-        passwordHash: passwordData.hash
-    });
-}   
-        
-async function createAppointment(
-    patientId,
-    doctorId,
-    date,
-    time
-) {
-    // Check that both records exist
-    const patient = await getRecord("patients", patientId);
-    const doctor = await getRecord("doctors", doctorId);
-
-    if(!patient || !doctor){
-        return "Patient or doctor not found";
-    }
-    return addRecord("appointments", {
-        patientId,
-        doctorId,
-        date,
-        time,
-        status: "pending",
-        createdAt: new Date().toISOString()
-    });
-
-}
-
-async function updateRecord(storeName, id, changes) {
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readwrite");
-        const store = tx.objectStore(storeName);
-        const request = store.get(id);
-
-        let updatedRecord;
-
-        request.onsuccess = () => {
-            const existing = request.result;
-
-            if (!existing) {
-                tx.abort();
-                return;
-            }
-
-            updatedRecord = {
-                ...existing,
-                ...changes,
-                id
-            };
-
-            store.put(updatedRecord);
-        };
-
-        tx.oncomplete = () => {
-            db.close();
-            resolve(updatedRecord);
-        };
-
-        tx.onerror = () => {
-            db.close();
-            reject(tx.error);
-        };
-
-        tx.onabort = () => {
-            db.close();
-            reject(tx.error || new Error("Record not found."));
-        };
-    });
-}
-
-async function deleteRecord(storeName, id) {
-    const db = await openDatabase();
-
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, "readwrite");
-        const store = tx.objectStore(storeName);
-        const request = store.get(id);
-
-        request.onsuccess = () => {
-            if (!request.result) {
-                tx.abort();
-                return;
-            }
-
-            store.delete(id);
-        };
-
-        request.onerror = () => reject(request.error);
-        tx.oncomplete = () => {
-            db.close();
-            resolve(true);
-        };
-
-        tx.onabort = () => {
-            const error = tx.error || new Error("Record not found.");
-            db.close();
-            reject(error);
-        };
-    });
-}
-
 const patientForm = document.getElementById("patientForm");
 
 if (patientForm) {
@@ -349,8 +94,14 @@ if (patientForm) {
             );
             const passwordHash = { hash: new Uint8Array(hashBits), salt: hashSalt };
 
-            await addPatientWithEncryptedContact(safeName, safeEmail, safePhone, password, passwordHash);
-            await loadAppointmentOptions();
+            const result = await addPatientWithEncryptedContact(
+                safeName,
+                safeEmail,
+                safePhone,
+                password
+            );
+            console.log("Patient registered with ID:", result.patientId);
+
             message.textContent = "Patient registered successfully!";
             this.reset();
 
@@ -364,46 +115,41 @@ if (patientForm) {
 
 const appointmentForm = document.getElementById("appointmentForm");
 if (appointmentForm) {
-    appointmentForm
-    .addEventListener("submit", async function(event) {
+    appointmentForm.addEventListener("submit", async function(event) {
         event.preventDefault();
 
         const appointment = {
             patientId: Number(
                 document.getElementById("appointmentPatient").value
             ),
-
             doctorId: Number(
                 document.getElementById("appointmentDoctor").value
             ),
             date: document.getElementById("appointmentDate").value,
-            time: document.getElementById("appointmentTime").value,
-            status: "pending"
+            time: document.getElementById("appointmentTime").value
         };
 
-        const message = document.getElementById("qppointmentMessage");
+        const message = document.getElementById("appointmentMessage");
 
         try {
-            const patient = await getRecord(
-                "patients", appointment.patientId
-            );
+            const response = await fetch("/api/appointments", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(appointment)
+            });
 
-            const doctor = await getRecord(
-                "doctors", appointment.doctorId
-            );
+            const result = await response.json();
 
-            if (!patient || !doctor) {
-                throw new Error("Pateint or doctor not found.");
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create appointment.");
             }
-
-            await addRecord("appointments", appointment);
-
-            message.textContent = "Appointment created!";
+            message.textContent = "Appointment created successfully!";
             this.reset();
-
         } catch (error) {
             console.error(error);
-            message.textContent = "Could not create appointment.";
+            message.textContent = error.message || "Could not create appointment.";
         }
     });
 }
@@ -436,56 +182,6 @@ async function loadAppointmentOptions() {
     });
 
 }
-async function displayAppointments() {
-    const list = document.getElementById("appointmentList");
-    const message = document.getElementById("message");
-
-    list.replaceChildren();
-    message.textContent = "Loading...";
-
-    try {
-        const appointments = 
-            await getALLRecords("appointments");
-            
-        if(appointments.length === 0) {
-            message.textContent = "No appointments yet.";
-            return;
-        }
-
-        for(const appointment of appointments) {
-            const doctor = await getRecord(
-                "doctors",
-                appointment.doctorId
-            );
-            const patient = await getRecord(
-                "patients",
-                appointment.patientId
-            );
-            
-            const item = document.createElement("article");
-            const heading = document.createElement("h3");
-            const details = document.createElement("p")
-            const status = document.createElement("p")
-
-            heading.textContent =
-            `${doctor?.name ?? "Unkown doctor"} - ` +
-            `${patient?.name ?? "Unkown Patient"}`;
-
-            details.textContent =  
-            `${appointment.date} at ${appointment.time}`;
-
-            status.textContent = 
-            `Status: ${appointment.status}`;
-
-            item.append(heading, details, status);
-            list.append(item);
-        }
-        message.textContent = "";
-    } catch (error) {
-        console.error(error);
-        message.textContent = "Could not load appointments.";
-    }
-}
 
 async function makeKey(password, salt) {
     const keyMaterial = await crypto.subtle.importKey(
@@ -509,21 +205,65 @@ async function encryptData(data, password) {
 
 async function addPatientWithEncryptedContact(name, email, phone, password) {
     const encryptedContact = await encryptData(
-        { email: email, phone: phone },
+        { email, phone },
         password
     );
 
-    return addRecord("patients", {
-        name: name,
-        encryptedContact: encryptedContact
+    //Convert encrypted binary data to base64
+    const toBase64 = (buffer) => {
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+
+        bytes.forEach(byte => {
+            binary += String.fromCharCode(byte);
+        });
+
+        return btoa(binary);
+    };
+
+    //Build the patient data object
+    const patientData = {
+        name,
+        encryptedData: toBase64(encryptedContact.encryptedData),
+        salt: toBase64(encryptedContact.salt),
+        iv: toBase64(encryptedContact.iv)
+    };
+
+    //Send the data to your express server for storage in the SQLite database
+    const response = await fetch("/api/patients", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(patientData)
     });
+
+    const result = await response.json();
+
+    if(!response.ok) {
+        throw new Error(result.error || "Failed to register patient.");
+    }
+
+    return result.patientId;
 }
+
 
 // Habbani: decrypt data after it has been saved.
 async function decryptData(savedData, password) {
      const key = await makeKey(password, savedData.salt);
     const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: savedData.iv }, key, savedData.encryptedData);
     return JSON.parse(new TextDecoder().decode(plain));
+}
+
+//Reverses the Base64 conversion when retrieving data from the database.
+function fromBase64(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
 }
 
 async function hashPassword(password, salt = null) {
@@ -583,63 +323,72 @@ if (loginForm) {
         let patientContact = null;
 
         if (role === "patient") {
-            const patients = await getALLRecords("patients");
+            const response = await fetch("/api/patients");
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch patients.");
+            }
+
+            const patients = await response.json();
+
+            for(const patient of patients) {
+                try {
+                    const savedData = {
+                        encryptedData: fromBase64(patient.encryptedData),
+                        salt: fromBase64(patient.salt),
+                        iv: fromBase64(patient.iv)
+                    };
+
+                    const contact = await decryptData(savedData, password);
+
+                    if (contact.email?.toLowerCase() === email) {
+                        account = patient;
+                        patientContact = contact;
+                        break;
+                    }
+                } catch (error) {
+                    //Password did not decrypt this patient's data.
        
-        for (const patient of patients) {
-        try {
-            const contact = await decryptData(patient.encryptedContact, password);
-            console.log("Decrypted patient contact:", contact);
-
-
-            if (contact.email?.toLowerCase() === email) {
-                account = patient;
-                patientContact = contact;
-                break;
-            }
-            
-            } catch (error) {
-            // This password did not decrypt this patient's data.
-            }
-        }   
+        
+        }  
+    } 
     } else if (role === "doctor") {
-        const doctors = await getALLRecords("doctors");
+       
+        const response = await fetch("/api/doctors/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
 
-        const doctor = doctors.find(
-            item => item.email?.toLowerCase() === email
-        );
-
-        if (doctor?.passwordHash && doctor?.passwordSalt) {
-            const valid =  await verifyPassword(
-                password,
-                doctor.passwordSalt,
-                doctor.passwordHash
-            );
-
-            if (valid) account = doctor;
+        const result = await response.json();
+        
+        if (!response.ok) {
+            message.textContent = result.error || "Invalid email or password.";
+            return;
         }
+
+        account = result;
+
     } else if (role === "admin") {
-        const users = await getALLRecords("users");
+        const response = await fetch("/api/admin/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
 
-        const admin = users.find(
-            item => item.role === "admin" && 
-                item.email?.toLowerCase() === email
-        );
+        const result = await response.json();
 
-        if (admin?.passwordHash && admin?.passwordSalt) {
-            const valid = await verifyPassword(
-                password,
-                admin.passwordSalt,
-                admin.passwordHash
-            );
-            if (valid) account = admin;
+        if (!response.ok) {
+            message.textContent = result.error || "Invalid email or password.";
+            return;
         }
-    }
 
-    if (!account) {
-        message.textContent = "Invalid email or password.";
-        return;
+        account = result;
     }
-
     //Clear any previous login information.
     sessionStorage.removeItem("loggedInPatientId");
     sessionStorage.removeItem("loggedInDoctorId");
@@ -670,7 +419,7 @@ if (loginForm) {
     } else {
         sessionStorage.setItem("loggedInAdminId", account.id);
         message.textContent = "Admin sign in successful.";
-        window.location.href = "admin.html"
+        window.location.href = "admin/admin.html"
     }
     } catch (error) {
         console.error("Login error:", error);
