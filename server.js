@@ -1,11 +1,23 @@
+require("dotenv").config();
+
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
 const db = require("./database");
+
 console.log("Database:", !!db);
 console.log("Prepare type:", typeof db.prepare);
 
 const app = express();
+
+//Creating a consistent one-way hash of an email address, 
+// to check for duplicates
+function hashPatientEmail(email) {
+    return crypto
+        .createHmac("sha256", process.env.EMAIL_HASH_SECRET)
+        .update(email.trim().toLowerCase())
+        .digest("hex")
+}
 
 app.use(express.json());
 
@@ -177,25 +189,103 @@ app.post("/api/doctors/login", (req, res) => {
     }
 });
 
+// Update doctor details
+app.put("/api/doctors/:id", (req, res) => {
+    try {
+        const doctorId = Number(req.params.id);
+        const { name, speciality, email } = req.body;
+
+        if (
+            !Number.isInteger(doctorId) ||
+            doctorId <= 0 ||
+            !name?.trim() ||
+            !speciality?.trim() ||
+            !email?.trim()
+        ) {
+            return res.status(400).json({
+                error: "Please provide valid doctor details."
+            });
+        }
+
+        const doctor = db.prepare(`
+            SELECT id FROM doctors WHERE id = ?
+        `).get(doctorId);
+
+        if (!doctor) {
+            return res.status(404).json({
+                error: "Doctor not found."
+            });
+        }
+
+        db.prepare(`
+            UPDATE doctors
+            SET name = ?, speciality = ?, email = ?
+            WHERE id = ?
+        `).run(
+            name.trim(),
+            speciality.trim(),
+            email.trim(),
+            doctorId
+        );
+
+        res.json({
+            message: "Doctor details updated successfully."
+        });
+
+    } catch (error) {
+        console.error("Doctor update error:", error);
+
+        if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+            return res.status(409).json({
+                error: "That email address is already in use."
+            });
+        }
+
+        res.status(500).json({
+            error: "Could not update doctor details."
+        });
+    }
+});
+
 app.post("/api/patients", (req, res) => {
     try {
-    const { name, encryptedData, salt, iv } = req.body;
+    const { name, email, encryptedData, salt, iv } = req.body;
 
-    if(!name || !encryptedData || !salt || !iv) {
+    if(!name || !email || !encryptedData || !salt || !iv) {
         return res.status(400).json({
              error: "Missing required fields" });
     }
 
+    if(!process.env.EMAIL_HASH_SECRET) {
+        console.error("EMAIL_HASH_SECRET is missing");
+        return res.status(500).json({
+            error: "Server configuration error"
+        });
+    }
+
+    const emailHash = hashPatientEmail(email);
+
+    const existingPatient = db.prepare(`
+        SELECT id FROM patients WHERE emailHash = ?
+        `).get(emailHash);
+
+    if(existingPatient) {
+        return res.status(409).json({
+            error: "An account with this email already exists."
+        })
+    }
+
     const insertPatient = db.prepare(`
-        INSERT INTO patients (name, encryptedData, salt, iv)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO patients (name, encryptedData, salt, iv, emailHash)
+        VALUES (?, ?, ?, ?, ?)
     `);
 
     const result = insertPatient.run(
         name,
         Buffer.from(encryptedData, "base64"),
         Buffer.from(salt, "base64"),
-        Buffer.from(iv, "base64")
+        Buffer.from(iv, "base64"),
+        emailHash
     );
 
     res.status(201).json({
@@ -230,8 +320,278 @@ app.get("/api/patients", (req, res) => {
         });
     }
 });
+
+app.get("/api/patients/:id", (req, res) => {
+    try {
+        const patientId = Number(req.params.id);
+
+        if (!Number.isInteger(patientId)) {
+            return res.status(400).json({
+                error: "Invalid patient ID"
+            });
+        }
+
+        const patient = db.prepare(`
+            SELECT id, name, encryptedData, salt, iv
+            FROM patients
+            WHERE id = ?
+        `).get(patientId);
+
+        if (!patient) {
+            return res.status(404).json({
+                error: "Patient not found"
+            });
+        }
+
+        res.json({
+            id: patient.id,
+            name: patient.name,
+            encryptedData: patient.encryptedData?.toString("base64"),
+            salt: patient.salt?.toString("base64"),
+            iv: patient.iv?.toString("base64")
+        });
+
+    } catch (error) {
+        console.error("Error loading patient:", error);
+
+        res.status(500).json({
+            error: "Could not load patient details"
+        });
+    }
+});
+
+// Update patient name only
+app.put("/api/patients/:id", (req, res) => {
+    try {
+        const patientId = Number(req.params.id);
+        const { name } = req.body;
+
+        if (!Number.isInteger(patientId) || patientId <= 0 || !name || !name.trim()) {
+            return res.status(400).json({
+                error: "A valid patient ID and name are required."
+            });
+        }
+
+        const patient = db.prepare(`
+            SELECT id FROM patients WHERE id = ?
+        `).get(patientId);
+
+        if (!patient) {
+            return res.status(404).json({
+                error: "Patient not found."
+            });
+        }
+
+        db.prepare(`
+            UPDATE patients
+            SET name = ?
+            WHERE id = ?
+        `).run(name.trim(), patientId);
+
+        res.json({
+            message: "Patient name updated successfully."
+        });
+
+    } catch (error) {
+        console.error("Patient update error:", error);
+
+        res.status(500).json({
+            error: "Could not update patient details."
+        });
+    }
+});
+
+// Save medical history for a patient
+app.post("/api/patients/:id/history", (req, res) => {
+    const patientId = Number(req.params.id);
+    const { doctorId, date, title, details } = req.body;
+
+    if (!Number.isInteger(patientId) ||
+        !Number.isInteger(Number(doctorId)) ||
+        !date || !title || !details) {
+        return res.status(400).json({
+            error: "Please provide all required medical history details."
+        });
+    }
+
+    try {
+        const result = db.prepare(`
+            INSERT INTO medical_history (
+                patientId, doctorId, date, title, details
+            )
+            VALUES (?, ?, ?, ?, ?)
+        `).run(
+            patientId,
+            Number(doctorId),
+            date,
+            title,
+            details
+        );
+
+        res.status(201).json({
+            message: "Medical history saved successfully.",
+            historyId: result.lastInsertRowid
+        });
+
+    } catch (error) {
+        console.error("Error saving medical history:", error);
+
+        res.status(500).json({
+            error: "Could not save medical history."
+        });
+    }
+});
+
+// Save clinical notes for a patient
+app.post("/api/patients/:id/notes", (req, res) => {
+    const patientId = Number(req.params.id);
+    const { doctorId, date, note } = req.body;
+
+    if (
+        !Number.isInteger(patientId) ||
+        !Number.isInteger(Number(doctorId)) ||
+        !date || !note
+    ) {
+        return res.status(400).json({
+            error: "Please provide all required clinical note details."
+        });
+    }
+
+    try {
+        const result = db.prepare(`
+            INSERT INTO clinical_notes (
+                patientId, doctorId, date, note
+            )
+            VALUES (?, ?, ?, ?)
+        `).run(
+            patientId,
+            Number(doctorId),
+            date,
+            note
+        );
+
+        res.status(201).json({
+            message: "Clinical note saved successfully.",
+            noteId: result.lastInsertRowid
+        });
+
+    } catch (error) {
+        console.error("Error saving clinical note:", error);
+
+        res.status(500).json({
+            error: "Could not save clinical note."
+        });
+    }
+});
+
+// Save prescriptions for a patient
+app.post("/api/patients/:id/prescriptions", (req, res) => {
+    const patientId = Number(req.params.id);
+
+    const {
+        doctorId,
+        date,
+        medicine,
+        dosage,
+        frequency,
+        duration,
+        instructions
+    } = req.body;
+
+    if (
+        !Number.isInteger(patientId) ||
+        !Number.isInteger(Number(doctorId)) ||
+        !date ||
+        !medicine ||
+        !dosage ||
+        !frequency ||
+        !duration
+    ) {
+        return res.status(400).json({
+            error: "Please provide all required prescription details."
+        });
+    }
+
+    try {
+        const result = db.prepare(`
+            INSERT INTO prescriptions (
+                patientId,
+                doctorId,
+                date,
+                medicine,
+                dosage,
+                frequency,
+                duration,
+                instructions
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            patientId,
+            Number(doctorId),
+            date,
+            medicine,
+            dosage,
+            frequency,
+            duration,
+            instructions || ""
+        );
+
+        res.status(201).json({
+            message: "Prescription saved successfully.",
+            prescriptionId: result.lastInsertRowid
+        });
+
+    } catch (error) {
+        console.error("Error saving prescription:", error);
+
+        res.status(500).json({
+            error: "Could not save prescription."
+        });
+    }
+});
+
+// Get all medical records belonging to one patient
+app.get("/api/patients/:id/records", (req, res) => {
+    const patientId = Number(req.params.id);
+
+    try {
+        const medicalHistory = db.prepare(`
+            SELECT id, doctorId, date, title, details
+            FROM medical_history
+            WHERE patientId = ?
+            ORDER BY date DESC
+        `).all(patientId);
+
+        const clinicalNotes = db.prepare(`
+            SELECT id, doctorId, date, note
+            FROM clinical_notes
+            WHERE patientId = ?
+            ORDER BY date DESC
+        `).all(patientId);
+
+        const prescriptions = db.prepare(`
+            SELECT id, doctorId, date, medicine, dosage,
+                   frequency, duration, instructions
+            FROM prescriptions
+            WHERE patientId = ?
+            ORDER BY date DESC
+        `).all(patientId);
+
+        res.json({
+            medicalHistory,
+            clinicalNotes,
+            prescriptions
+        });
+
+    } catch (error) {
+        console.error("Error retrieving patient records:", error);
+        res.status(500).json({ error: "Failed to retrieve patient records." });
+    }
+});
+
 app.post("/api/appointments", (req, res) => {
     try {
+        console.log("Appointment request received:", req.body);
         const {
             patientId,
             doctorId,
@@ -242,7 +602,7 @@ app.post("/api/appointments", (req, res) => {
 
         if (
             !Number.isInteger(patientId) ||
-            !Numver.isInteger(doctorId) ||
+            !Number.isInteger(doctorId) ||
             !date || !time
         ) {
             return res.status(400).json({
@@ -269,9 +629,9 @@ app.post("/api/appointments", (req, res) => {
         //Save the appointment
         const result = db.prepare(`
             INSERT INTO appointments (
-            patientId, doctorId, date, time, createdAt
+            patientId, doctorId, date, time, status, createdAt
             )
-            VALUES (?, ?, ?, ?, ?)`).run(
+            VALUES (?, ?, ?, ?, ?, ?)`).run(
                 patientId,
                 doctorId,
                 date,
@@ -369,6 +729,25 @@ app.post("/api/admin/login", (req, res) => {
     }
 });
 
+// Get all admin accounts
+app.get("/api/admin", (req, res) => {
+    try {
+        const admins = db.prepare(`
+            SELECT id, name, email, role
+            FROM users
+            WHERE role = 'admin'
+        `).all();
+
+        res.json(admins);
+
+    } catch (error) {
+        console.error("Error fetching admins:", error);
+        res.status(500).json({
+            error: "Failed to retrieve admin accounts."
+        });
+    }
+});
+
 app.delete("/api/patients/:id", (req, res) => {
     try {
         const patientId = Number(req.params.id);
@@ -421,7 +800,7 @@ app.delete("/api/patients/:id", (req, res) => {
     }
 });
 
-app.delete("/api/admins/:id", (req, res) =>{
+app.delete("/api/admin/:id", (req, res) =>{
     try {
         const adminId = Number(req.params.id);
 
@@ -530,7 +909,7 @@ app.delete("/api/doctors/:id", (req, res) => {
     }
 });
 
-app.get("/api/admins", (req, res) => {
+app.get("/api/admin", (req, res) => {
     try{
         const admins = db.prepare(`
             SELECT id, name, email, role

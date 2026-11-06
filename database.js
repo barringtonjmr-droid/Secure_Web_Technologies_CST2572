@@ -42,7 +42,60 @@ db.exec(`
         createdAt TEXT,
         FOREIGN KEY (patientId) REFERENCES patients(id),
         FOREIGN KEY (doctorId) REFERENCES doctors(id)
-        );  
-`);
+        );
+`)
 
+    db.prepare(`
+    CREATE TABLE IF NOT EXISTS medical_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patientId INTEGER NOT NULL,
+        doctorId INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        title TEXT NOT NULL,
+        details TEXT NOT NULL,
+        createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patientId) REFERENCES patients(id),
+        FOREIGN KEY (doctorId) REFERENCES doctors(id)
+        )
+    `).run();
+    
+    db.prepare(`
+    CREATE TABLE IF NOT EXISTS clinical_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patientId INTEGER NOT NULL,
+        doctorId INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        note TEXT NOT NULL,
+        createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patientId) REFERENCES patients(id),
+        FOREIGN KEY (doctorId) REFERENCES doctors(id)
+    )
+`).run();
+    
+    db.prepare(`
+    CREATE TABLE IF NOT EXISTS prescriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patientId INTEGER NOT NULL,
+        doctorId INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        medicine TEXT NOT NULL,
+        dosage TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        duration TEXT NOT NULL,
+        instructions TEXT,
+        createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patientId) REFERENCES patients(id),
+        FOREIGN KEY (doctorId) REFERENCES doctors(id)
+    )
+`).run();
+
+const patientColumns = db.prepare(`
+    PRAGMA table_info(patients)
+    `).all();
+
+if (!patientColumns.some(column => column.name === "emailHash")) {
+    db.exec(`
+        ALTER TABLE patients ADD COLUMN emailHash TEXT
+        `);
+}
 module.exports = db;

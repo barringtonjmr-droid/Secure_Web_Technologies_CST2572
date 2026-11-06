@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
+    //Get session adminIds and role
     const adminId = sessionStorage.getItem("loggedInAdminId");
     const role = sessionStorage.getItem("loggedInRole");
 
+    //Checks if your and admin
     if (!adminId || role !== "admin") {
         alert("You must log in as an admin in order to access this page.");
         window.location.href = "../cst_project.html#login";
@@ -17,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
 async function loadAdminDashboard() {
     const message = document.getElementById("appointmentMessage");
 
+    //Get data from tables
     try {
         const [
             patientsResponse,
@@ -27,9 +30,10 @@ async function loadAdminDashboard() {
             fetch("/api/patients"),
             fetch("/api/doctors"),
             fetch("/api/appointments"),
-            fetch("/api/admins")
+            fetch("/api/admin")
         ]);
 
+        //Error handling for failing to get data
         if (
             !patientsResponse.ok ||
             !doctorsResponse.ok ||
@@ -105,6 +109,7 @@ async function createDoctorAccount() {
     const phone = document.getElementById("doctorPhone").value.trim();
     const password = document.getElementById("doctorPassword").value;
 
+    //Required fields
     if (!name || !email || !password) {
         if (message) {
             message.textContent = "Please fill in all required fields.";
@@ -113,7 +118,7 @@ async function createDoctorAccount() {
     }
 
     try {
-        // Use your existing PBKDF2 password hashing function
+        // Use the existing PBKDF2 password hashing function
         const passwordData = await hashPassword(password);
 
         const response = await fetch("/api/doctors", {
@@ -133,6 +138,7 @@ async function createDoctorAccount() {
 
         const result = await response.json();
 
+        //Error handling
         if (!response.ok) {
             throw new Error(result.error || "Could not create doctor account.");
         }
@@ -162,10 +168,10 @@ function displayPatientAccounts(patients) {
     tbody.replaceChildren();
 
     if (patients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">No patients found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
         return;
     }
-
+    //Adding data to patients table
     patients.forEach(patient => {
         const row = document.createElement("tr");
 
@@ -176,70 +182,153 @@ function displayPatientAccounts(patients) {
         });
 
         const actionCell = document.createElement("td");
+        //Delete functionality
         const deleteButton = document.createElement("button");
-
         deleteButton.textContent = "Delete";
+
         deleteButton.addEventListener("click", () => {
-            deletePatient(patient.id);
+            deletePatients(patient.id);
         });
 
         actionCell.appendChild(deleteButton);
         row.appendChild(actionCell);
+
+        //Update functionality
+        const manageCell = document.createElement("td");
+
+        const editButton = document.createElement("button");
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener("click", () => {
+            editPatient(patient);
+        });
+
+        manageCell.appendChild(editButton);
+        row.appendChild(manageCell);
+
         tbody.appendChild(row);
     });
 }
 
+
+// Opens the edit form for the selected patient and fills in their current details.
+function editPatient(patient) {
+    // Stores the patient's ID in the hidden or read-only ID field.
+    document.getElementById("editPatientId").value = patient.id;
+    // Displays the patient's current name in the name input field.
+    document.getElementById("editPatientName").value = patient.name;
+    // Makes the patient edit form visible.
+    document.getElementById("editPatientContainer").hidden = false;
+    // Clears any previous message displayed in the edit form.
+    document.getElementById("editPatientMessage").textContent = "";
+}
+
+// Opens the edit form for the selected doctor and fills in their current details.
+function editDoctor(doctor) {
+    // Stores the doctor's ID in the ID field.
+    document.getElementById("editDoctorId").value = doctor.id;
+    // Displays the doctor's current name in the name input field.
+    document.getElementById("editDoctorName").value = doctor.name;
+    // Displays the doctor's speciality.
+    // If no speciality is available, the field is left empty.
+    document.getElementById("editDoctorSpeciality").value =
+        doctor.speciality || "";
+    // Displays the doctor's current email address.
+    document.getElementById("editDoctorEmail").value = doctor.email;
+    // Makes the doctor edit form visible.
+    document.getElementById("editDoctorContainer").hidden = false;
+    // Clears any previous message displayed in the edit form.
+    document.getElementById("editDoctorMessage").textContent = "";
+}
+
+// Displays all doctor accounts in the doctor accounts table.
 function displayDoctorAccounts(doctors) {
+    // Gets the table body where the doctor information will be displayed.
     const tbody = document.getElementById("doctorAccountsBody");
     if (!tbody) return;
-
+    // Removes all existing rows so the table can be refreshed.
     tbody.replaceChildren();
 
+    // Checks whether there are any doctors to display.
     if (doctors.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">No doctors found.</td></tr>';
-        return;
+        tbody.innerHTML = '<tr><td colspan="6">No doctors found.</td></tr>';
+        return; 
     }
-
     doctors.forEach(doctor => {
+        // Creates a new table row for the current doctor.
         const row = document.createElement("tr");
 
-        [
-            doctor.id,
-            doctor.name,
-            doctor.speciality || "—",
-            doctor.email
-        ].forEach(value => {
-            const cell = document.createElement("td");
-            cell.textContent = value;
-            row.appendChild(cell);
-        });
+        // Creates table cells for the doctor's ID, name, speciality and email.
+        // If the doctor has no speciality, a dash is displayed instead.
+        [doctor.id, doctor.name, doctor.speciality || "—", doctor.email]
+            .forEach(value => {
+                // Creates a new table cell.
+                const cell = document.createElement("td");
 
+                // Adds the current doctor's information as text.
+                cell.textContent = value;
+
+                // Adds the cell to the current table row.
+                row.appendChild(cell);
+            });
+
+        // Creates a separate table cell for the Delete button.
         const actionCell = document.createElement("td");
-        const deleteButton = document.createElement("button");
 
+        // Creates the Delete button.
+        const deleteButton = document.createElement("button");
         deleteButton.textContent = "Delete";
+
+        // Calls deleteDoctor() with this doctor's ID when the button is clicked.
         deleteButton.addEventListener("click", () => {
             deleteDoctor(doctor.id);
         });
 
+        // Adds the Delete button to its table cell.
         actionCell.appendChild(deleteButton);
+
+        // Adds the Delete button cell to the current table row.
         row.appendChild(actionCell);
+
+        // Creates another table cell for the Edit button.
+        const manageCell = document.createElement("td");
+
+        // Creates the Edit button.
+        const editButton = document.createElement("button");
+        editButton.textContent = "Edit";
+
+        // Calls editDoctor() with this doctor's details when the button is clicked.
+        editButton.addEventListener("click", () => {
+            editDoctor(doctor);
+        });
+
+        // Adds the Edit button to its table cell.
+        manageCell.appendChild(editButton);
+
+        // Adds the Edit button cell to the current table row.
+        row.appendChild(manageCell);
+
+        // Adds the completed doctor row to the table.
         tbody.appendChild(row);
     });
 }
 
 
+// Displays all admin accounts in the admin table.
 function displayAdminAccounts(admins) {
     const tbody = document.getElementById("adminAccountsBody");
     if (!tbody) return;
 
+    // Clears the table before displaying the latest admin accounts.
     tbody.replaceChildren();
 
+    // Displays a message if there are no admin accounts.
     if (admins.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4">No admins found.</td></tr>';
         return;
     }
 
+    // Creates a table row for each admin, including their details and Delete button.
     admins.forEach(admin => {
         const row = document.createElement("tr");
 
@@ -263,22 +352,27 @@ function displayAdminAccounts(admins) {
     });
 }
 
+// Deletes a patient account after asking the admin for confirmation.
 async function deletePatients(patientId) {
     if (!confirm("Are you sure you want to delete this patient")) {
         return;
     }
 
     try {
+        // Sends a DELETE request to the server for the selected patient.
         const response = await fetch(`/api/patients/${patientId}`, {
             method: "DELETE"
         });
 
         const result = await response.json();
 
+        // Displays an error if the server could not delete the patient.
         if (!response.ok) {
             alert(result.error || "Could not delete patient.");
             return;
         }
+
+        // Confirms deletion and refreshes the admin dashboard.
         alert(result.message);
         await loadAdminDashboard();
     } catch (error) {
@@ -287,6 +381,7 @@ async function deletePatients(patientId) {
     }
 }
 
+// Deletes a doctor account after asking the admin for confirmation.
 async function deleteDoctor(doctorId) {
     if (!confirm("Are you sure you want to delete this doctor?")) {
         return;
@@ -304,6 +399,7 @@ async function deleteDoctor(doctorId) {
             return;
         }
 
+        // Confirms deletion and refreshes the dashboard.
         alert(result.message);
         await loadAdminDashboard();
 
@@ -313,6 +409,7 @@ async function deleteDoctor(doctorId) {
     }
 }
 
+// Deletes an admin account after asking for confirmation.
 async function deleteAdmin(adminId) {
     if (!confirm("Are you sure you want to delete this admin account?")) {
         return;
@@ -330,6 +427,7 @@ async function deleteAdmin(adminId) {
             return;
         }
 
+        // Confirms deletion and refreshes the dashboard.
         alert(result.message);
         await loadAdminDashboard();
 
@@ -338,6 +436,7 @@ async function deleteAdmin(adminId) {
         alert("Could not delete admin.");
     }
 }
+
 
 function displayAdminAppointments(appointments, patients, doctors) {
     const tbody = document.getElementById("appointmentTableBody");
@@ -399,6 +498,8 @@ function displayAdminAppointments(appointments, patients, doctors) {
     });
 }
 
+
+// Waits until the HTML page has loaded before setting up the account form.
 document.addEventListener("DOMContentLoaded", () => {
     const showButton = document.getElementById("showAccountForm");
     const cancelButton = document.getElementById("cancelAccountForm");
@@ -409,23 +510,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const specialityInput = document.getElementById("doctorSpeciality");
     const message = document.getElementById("accountMessage");
 
+    // Checks that the required account form elements exist.
     if (!showButton || !cancelButton || !formContainer || !form) {
         console.error("Account form elements are missing from admin.html");
         return;
     }
 
+    // Shows the account creation form when the Show button is clicked.
     showButton.addEventListener("click", () => {
         formContainer.hidden = false;
         message.textContent = "";
     });
 
+    // Resets and hides the form when the Cancel button is clicked.
     cancelButton.addEventListener("click", () => {
         form.reset();
         formContainer.hidden = true;
-        message,textContent = "";
+        message.textContent = "";
         updateRoleFields();
     });
 
+    // Shows the speciality field only when the Doctor role is selected.
     function updateRoleFields() {
         const isDoctor = roleSelect.value === "doctor";
         doctorFields.hidden = !isDoctor;
@@ -435,10 +540,12 @@ document.addEventListener("DOMContentLoaded", () => {
     roleSelect.addEventListener("change", updateRoleFields);
     updateRoleFields();
 
+    // Handles account creation when the form is submitted.
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         message.textContent = "";
 
+        // Gets the account details entered into the form.
         const role = roleSelect.value;
         const name = document.getElementById("accountName").value.trim();
         const email = document.getElementById("accountEmail").value.trim().toLowerCase();
@@ -446,11 +553,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("accountPassword").value;
         const speciality = specialityInput.value.trim();
 
+        // Checks that the name contains at least two characters.
         if (name.length < 2) {
             message.textContent = "Enter a valid full name.";
             return;
         }
 
+        // Checks that the password meets the required security rules.
         if (password.length < 8 ||
             !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
             message.textContent =
@@ -458,12 +567,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // Makes sure a speciality is entered when creating a doctor account.
         if (role === "doctor" && !speciality) {
             message.textContent = "Enter the doctor's speciality.";
             return;
         }
 
         try {
+            // Calls the appropriate function depending on the selected account role.
             if (role === "patient") {
                 await addPatientWithEncryptedContact(
                     name, email, phone, password
@@ -474,22 +585,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
             }
 
-            message.textContent = 
-                `${role === "patient" ? "Patient" : "Doctor"} account created
-                successfully.`;
-            
-                form.reset();
-                updateRoleFields();
+            // Displays a success message, resets the form and refreshes the dashboard.
+            message.textContent =
+                `${role === "patient" ? "Patient" : "Doctor"} account created successfully.`;
 
-                await loadAdminDashboard();
+            form.reset();
+            updateRoleFields();
+
+            await loadAdminDashboard();
 
         } catch (error) {
+            // Displays an error if account creation fails.
             console.error("Account creation failed:", error);
             message.textContent =
                 error.message || "Could not create the account. Please try again.";
-                
         }
+    });
 });
+
 //Load existing doctors into the dropdown
 async function loadDoctorsForPasswordReset() {
     console.log("Loading doctors for password reset...");
@@ -585,4 +698,118 @@ if (resetForm) {
 loadDoctorsForPasswordReset().catch((error) => {
     console.error("Could not load doctors:", error)
 })
+
+
+// Waits until the HTML page has loaded before setting up the edit forms.
+document.addEventListener("DOMContentLoaded", () => {
+    const editPatientForm = document.getElementById("editPatientForm");
+    const cancelPatientEdit = document.getElementById("cancelPatientEdit");
+
+    if (!editPatientForm) return;
+
+    // Handles updating a patient's details when the form is submitted.
+    editPatientForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const patientId = document.getElementById("editPatientId").value;
+        const name = document.getElementById("editPatientName").value.trim();
+        const message = document.getElementById("editPatientMessage");
+
+        // Checks that a patient name has been entered.
+        if (!name) {
+            message.textContent = "Please enter a patient name.";
+            return;
+        }
+
+        try {
+            // Sends the updated patient name to the server using a PUT request.
+            const response = await fetch(`/api/patients/${patientId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Could not update patient.");
+            }
+
+            // Displays a success message, closes the form and refreshes the dashboard.
+            message.textContent = "Patient updated successfully!";
+
+            editPatientForm.reset();
+            document.getElementById("editPatientContainer").hidden = true;
+
+            await loadAdminDashboard();
+
+        } catch (error) {
+            // Displays an error if the patient update fails.
+            console.error("Patient update error:", error);
+            message.textContent = error.message;
+        }
+    });
+
+    // Resets and closes the patient edit form when Cancel is clicked.
+    cancelPatientEdit?.addEventListener("click", () => {
+        editPatientForm.reset();
+        document.getElementById("editPatientContainer").hidden = true;
+    });
+});
+
+// Sets up the doctor edit form after the HTML page has loaded.
+document.addEventListener("DOMContentLoaded", () => {
+    const editDoctorForm = document.getElementById("editDoctorForm");
+    const cancelDoctorEdit = document.getElementById("cancelDoctorEdit");
+
+    if (!editDoctorForm) return;
+
+    // Handles updating a doctor's details when the form is submitted.
+    editDoctorForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const doctorId = document.getElementById("editDoctorId").value;
+        const name = document.getElementById("editDoctorName").value.trim();
+        const speciality = document.getElementById("editDoctorSpeciality").value.trim();
+        const email = document.getElementById("editDoctorEmail").value.trim();
+        const message = document.getElementById("editDoctorMessage");
+
+        try {
+            // Sends the updated doctor details to the server using a PUT request.
+            const response = await fetch(`/api/doctors/${doctorId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name, speciality, email })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Could not update doctor.");
+            }
+
+            // Displays a success message, closes the form and refreshes the dashboard.
+            message.textContent = "Doctor updated successfully!";
+
+            editDoctorForm.reset();
+            document.getElementById("editDoctorContainer").hidden = true;
+
+            await loadAdminDashboard();
+
+        } catch (error) {
+            // Displays an error if the doctor update fails.
+            console.error("Doctor update error:", error);
+            message.textContent = error.message;
+        }
+    });
+
+    // Resets and closes the doctor edit form when Cancel is clicked.
+    cancelDoctorEdit?.addEventListener("click", () => {
+        editDoctorForm.reset();
+        document.getElementById("editDoctorContainer").hidden = true;
+    });
 });

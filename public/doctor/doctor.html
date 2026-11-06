@@ -5,14 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Primehealth - Doctor Dashboard</title>
     <link rel="stylesheet" href="doctor.css">
-    <script src="doctor.js" defer></script>
 </head>
 <body>
     <header>PrimeHealth - Doctor Dashboard</header>
+    
 
     <main>
         <h2>Welcome to your Doctor Dashboard</h2>
         <p id="doctorWelcome">Loading your account...</p>
+        <button id="logoutButton" type="button">Log out</button>
     </main>
+	
+	<label for="searchPatient">Find patient</label>
+	<input id="searchPatient" type="search" required /> 
+			<div id="doctorPatientlist" class="card-list"></div>
+			<section id="doctorRecord" class="subpanel" hidden>
+				<h3 id="selectedPatientTitle">Patient Record</h3>
+				<div id="doctorRecordDetails"></div>
+				<div class="dashboard-columns">
+					<form id="historyForm" class="subpanel">
+						<h3>Add medical history</h3>
+						<label>Date<input id="historyDate" type="date" required></label>
+						<label>Title<input id="historyTitle" required maxlength="120" placeholder="e.g. Allergy history"></label>
+						<label>Details<textarea id="historyDetails" rows="4" required></textarea></label>
+						<button type="submit">Save history</button>
+						<p id="historyMessage" class="message" role="status"></p>
+					</form>
+					<form id="noteForm" class="subpanel">
+						<h3>Add clinical note</h3>
+						<label>Date<input id="noteDate" type="date" required></label>
+						<label>Note<textarea id="noteText" rows="4" required placeholder="Consultation notes"></textarea></label>
+						<button type="submit">Save note</button>
+						<p id="noteMessage" class="message" role="status"></p>
+					</form>
+					<form id="prescriptionForm" class="subpanel">
+						<h3>Add prescription</h3>
+						<label>Date<input id="prescriptionDate" type="date" required></label>
+						<label>Medicine<input id="medicineName" required maxlength="120"></label>
+						<label>Dosage<input id="medicineDosage" required placeholder="e.g. 1 tablet"></label>
+						<label>Frequency<input id="medicineFrequency" required placeholder="e.g. twice daily"></label>
+						<label>Duration<input id="medicineDuration" required placeholder="e.g. 5 days"></label>
+						<label>Instructions<textarea id="medicineInstructions" rows="3" placeholder="Optional instructions"></textarea></label>
+						<button type="submit">Save prescription</button>
+						<p id="prescriptionMessage" class="message" role="status"></p>
+					</form>
+				</div>
+			</section>
+<script src="../app.js"></script>
+<script src="doctor.js"></script>
 </body>
 </html>

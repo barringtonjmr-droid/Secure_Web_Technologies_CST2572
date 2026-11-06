@@ -100,7 +100,7 @@ if (patientForm) {
                 safePhone,
                 password
             );
-            console.log("Patient registered with ID:", result.patientId);
+            console.log("Patient registered with ID:", result);
 
             message.textContent = "Patient registered successfully!";
             this.reset();
@@ -113,75 +113,298 @@ if (patientForm) {
     });
 }
 
+// Get the appointment form from the HTML page.
 const appointmentForm = document.getElementById("appointmentForm");
+
+// Check that the appointment form exists before adding an event listener.
 if (appointmentForm) {
+
+    // Listen for the user submitting the appointment form.
     appointmentForm.addEventListener("submit", async function(event) {
+
+        // Prevent the form from refreshing the page.
         event.preventDefault();
 
+        // Retrieve the logged-in patient's ID from session storage.
+        const patientId = Number(
+            sessionStorage.getItem("loggedInPatientId")
+        );
+
+        // Collect the appointment details entered by the patient.
         const appointment = {
-            patientId: Number(
-                document.getElementById("appointmentPatient").value
-            ),
+            patientId: patientId,
+
+            // Retrieve the selected doctor's ID.
             doctorId: Number(
                 document.getElementById("appointmentDoctor").value
             ),
+
+            // Retrieve the selected appointment date.
             date: document.getElementById("appointmentDate").value,
+
+            // Retrieve the selected appointment time.
             time: document.getElementById("appointmentTime").value
         };
 
+        // Get the element used to display appointment messages.
         const message = document.getElementById("appointmentMessage");
 
+        // Check that all required appointment details have been provided.
+        if (!patientId || !appointment.doctorId ||
+            !appointment.date || !appointment.time) {
+
+            // Inform the patient that some information is missing.
+            message.textContent = "Please complete all appointment fields.";
+            return;
+        }
+
         try {
+
+            // Send the appointment details to the server using a POST request.
             const response = await fetch("/api/appointments", {
                 method: "POST",
+
+                // Tell the server that the request contains JSON data.
                 headers: {
                     "Content-Type": "application/json"
                 },
+
+                // Convert the appointment object into JSON before sending it.
                 body: JSON.stringify(appointment)
             });
 
+            // Convert the server response into a JavaScript object.
             const result = await response.json();
 
+            // Check whether the appointment was successfully created.
             if (!response.ok) {
                 throw new Error(result.error || "Failed to create appointment.");
             }
+
+            // Inform the patient that their appointment was created successfully.
             message.textContent = "Appointment created successfully!";
+
+            // Clear the appointment form after successful submission.
             this.reset();
+
+            // Refresh the appointment lists so the new appointment appears.
+            await window.loadAppointments();
+
         } catch (error) {
+
+            // Log any errors in the browser console for debugging.
             console.error(error);
-            message.textContent = error.message || "Could not create appointment.";
+
+            // Display the error message to the patient.
+            message.textContent = error.message;
         }
     });
 }
 
-async function loadAppointmentOptions() {
-    const patients = await getALLRecords("patients");
-    const doctors = await getALLRecords("doctors");
 
-    const patientSelect = document.getElementById("appointmentPatient");
-    const doctorSelect = document.getElementById("appointmentDoctor");
+// Get the login form from the HTML page.
+const loginForm = document.getElementById("loginForm");
 
-    patientSelect.replaceChildren();
-    doctorSelect.replaceChildren();
+// Only add the event listener if the login form exists.
+if (loginForm) {
 
-    patientSelect.add(new Option("Choose a patient", ""));
-    doctorSelect.add(new Option("Choose a doctor", ""));
+    // Listen for the user submitting the login form.
+    loginForm.addEventListener("submit", async function(event) {
 
-    patients.forEach(patient => {
-        patientSelect.add(
-            new Option(patient.name, patient.id)
-        );
+        // Prevent the form from refreshing the page.
+        event.preventDefault();
+
+        // Retrieve the selected role, email and password.
+        const role = document.getElementById("loginRole").value;
+        const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+        const password = document.getElementById("loginPassword").value;
+
+        // Get the element used to display login messages.
+        const message = document.getElementById("loginMessage");
+
+        // Inform the user that the login process has started.
+        message.textContent = "Signing in...";
+
+        try {
+            // Store the account details after successful authentication.
+            let account = null;
+
+            // Store the decrypted patient contact information.
+            let patientContact = null;
+
+            // PATIENT LOGIN
+            if (role === "patient") {
+
+                // Request all patient records from the server.
+                const response = await fetch("/api/patients");
+
+                // Check whether the server request was successful.
+                if (!response.ok) {
+                    throw new Error("Failed to fetch patients.");
+                }
+
+                // Convert the server response into a JavaScript array.
+                const patients = await response.json();
+
+                // Check each patient record to find the matching account.
+                for (const patient of patients) {
+                    try {
+
+                        // Convert the encrypted patient data from Base64
+                        // back into Uint8Array format for decryption.
+                        const savedData = {
+                            encryptedData: fromBase64(patient.encryptedData),
+                            salt: fromBase64(patient.salt),
+                            iv: fromBase64(patient.iv)
+                        };
+
+                        // Decrypt the patient's contact information
+                        // using the password entered during login.
+                        const contact = await decryptData(savedData, password);
+
+                        // Check whether the decrypted email matches the entered email.
+                        if (contact.email?.toLowerCase() === email) {
+
+                            // Save the matching patient account.
+                            account = patient;
+
+                            // Save the decrypted contact information.
+                            patientContact = contact;
+
+                            // Stop searching once the correct account is found.
+                            break;
+                        }
+
+                    } catch (error) {
+
+                        // Decryption can fail when the password is incorrect
+                        // for this particular patient record.
+                        console.error("Patient decryption failed:", error);
+                    }
+                }
+
+            // DOCTOR LOGIN
+            } else if (role === "doctor") {
+
+                // Send the doctor's email and password to the server.
+                const response = await fetch("/api/doctors/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                // Convert the server response into a JavaScript object.
+                const result = await response.json();
+
+                // If authentication fails, display the server's error message.
+                if (!response.ok) {
+                    message.textContent = result.error || "Invalid email or password.";
+                    return;
+                }
+
+                // Store the authenticated doctor's account details.
+                account = result;
+
+            // ADMIN LOGIN
+            } else if (role === "admin") {
+
+                // Send the administrator's email and password to the server.
+                const response = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                // Convert the server response into a JavaScript object.
+                const result = await response.json();
+
+                // If authentication fails, display the server's error message.
+                if (!response.ok) {
+                    message.textContent = result.error || "Invalid email or password.";
+                    return;
+                }
+
+                // Store the authenticated administrator's account details.
+                account = result;
+            }
+
+            // Clear any previous login information from session storage.
+            sessionStorage.removeItem("loggedInPatientId");
+            sessionStorage.removeItem("loggedInDoctorId");
+            sessionStorage.removeItem("loggedInAdminId");
+
+            // Save the role of the currently logged-in user.
+            sessionStorage.setItem("loggedInRole", role);
+
+            // Check whether a matching account was found.
+            if (!account) {
+                message.textContent = "Patient account not found. Check your email and password.";
+                return;
+            }
+
+            // COMPLETE PATIENT LOGIN
+            if (role === "patient") {
+
+                // Save the patient's ID for use on other pages.
+                sessionStorage.setItem("loggedInPatientId", account.id);
+
+                // Create an object containing the patient's personal details.
+                const loggedInPatient = {
+                    name: account.name,
+                    email: patientContact.email,
+                    phone: patientContact.phone
+                };
+
+                // Display the patient's details on the health section.
+                document.querySelector("#health p").textContent =
+                    `Name: ${loggedInPatient.name} | Email: ${loggedInPatient.email} | Phone: ${loggedInPatient.phone}`;
+
+                // Display a successful login message.
+                message.textContent = "Patient signed in successfully.";
+
+                // Redirect the patient to their dashboard.
+                window.location.href = "patient/patient.html";
+
+            // COMPLETE DOCTOR LOGIN
+            } else if (role === "doctor") {
+
+                // Save the doctor's ID for use on other pages.
+                sessionStorage.setItem("loggedInDoctorId", account.id);
+
+                // Display a successful login message.
+                message.textContent = "Doctor sign in successful.";
+
+                // Redirect the doctor to their dashboard.
+                window.location.href = "doctor/doctor.html";
+
+            // COMPLETE ADMIN LOGIN
+            } else {
+
+                // Save the administrator's ID for use on other pages.
+                sessionStorage.setItem("loggedInAdminId", account.id);
+
+                // Display a successful login message.
+                message.textContent = "Admin sign in successful.";
+
+                // Redirect the administrator to their dashboard.
+                window.location.href = "admin/admin.html";
+            }
+
+        } catch (error) {
+
+            // Log unexpected login errors in the browser console.
+            console.error("Login error:", error);
+
+            // Display a general error message to the user.
+            message.textContent = "Something went wrong. Please try again";
+        }
     });
-   
-    doctors.forEach(doctor => {
-        doctorSelect.add(
-            new Option(`${doctor.name} - ${doctor.speciality}`,
-                doctor.id
-            )
-        );
-    });
-
 }
+
 async function makeKey(password, salt) {
     const keyMaterial = await crypto.subtle.importKey(
         "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
@@ -222,6 +445,7 @@ async function addPatientWithEncryptedContact(name, email, phone, password, pass
     //Build the patient data object
     const patientData = {
         name,
+        email: email.trim().toLowerCase(),
         encryptedData: toBase64(encryptedContact.encryptedData),
         salt: toBase64(encryptedContact.salt),
         iv: toBase64(encryptedContact.iv)
@@ -303,128 +527,8 @@ async function verifyPassword(password, savedSalt, savedHash) {
     return result.hash.every(
         (byte, index) => byte === savedHash[index]);
 }
-const loginForm = document.getElementById("loginForm");
-if (loginForm) {
-    loginForm
-    .addEventListener("submit", async function(event) {
-    event.preventDefault();
 
-    const role = document.getElementById("loginRole").value;
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-    const password = document.getElementById("loginPassword").value;
-    const message = document.getElementById("loginMessage");
-    
-    message.textContent = "Signing in...";
 
-    try {
-        let account = null;
-        let patientContact = null;
-
-        if (role === "patient") {
-            const response = await fetch("/api/patients");
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch patients.");
-            }
-
-            const patients = await response.json();
-
-            for(const patient of patients) {
-                try {
-                    const savedData = {
-                        encryptedData: fromBase64(patient.encryptedData),
-                        salt: fromBase64(patient.salt),
-                        iv: fromBase64(patient.iv)
-                    };
-
-                    const contact = await decryptData(savedData, password);
-
-                    if (contact.email?.toLowerCase() === email) {
-                        account = patient;
-                        patientContact = contact;
-                        break;
-                    }
-                } catch (error) {
-                    //Password did not decrypt this patient's data.
-       
-        
-        }  
-    } 
-    } else if (role === "doctor") {
-       
-        const response = await fetch("/api/doctors/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password })
-        });
-
-        const result = await response.json();
-        
-        if (!response.ok) {
-            message.textContent = result.error || "Invalid email or password.";
-            return;
-        }
-
-        account = result;
-
-    } else if (role === "admin") {
-        const response = await fetch("/api/admin/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            message.textContent = result.error || "Invalid email or password.";
-            return;
-        }
-
-        account = result;
-    }
-    //Clear any previous login information.
-    sessionStorage.removeItem("loggedInPatientId");
-    sessionStorage.removeItem("loggedInDoctorId");
-    sessionStorage.removeItem("loggedInAdminId");
-
-    sessionStorage.setItem("loggedInRole", role);
-
-    if (role === "patient") {
-        sessionStorage.setItem("loggedInPatientId", account.id);
-        
-        const loggedInPatient = { 
-            name: account.name,
-            email: patientContact.email,
-            phone: patientContact.phone
-        };
-
-        document.querySelector("#health p").textContent =
-            `Name: ${loggedInPatient.name} | Email: ${loggedInPatient.email} | Phone: ${loggedInPatient.phone}`;
-
-        message.textContent = "Patient signed in successfully.";
-        window.location.hash = "#health";
-    
-    } else if (role === "doctor") {
-        sessionStorage.setItem("loggedInDoctorId", account.id);
-        message.textContent = "Doctor sign in successful.";
-        window.location.href = "doctor/doctor.html";
-    
-    } else {
-        sessionStorage.setItem("loggedInAdminId", account.id);
-        message.textContent = "Admin sign in successful.";
-        window.location.href = "admin/admin.html"
-    }
-    } catch (error) {
-        console.error("Login error:", error);
-        message.textContent = "Something went wrong. Please try again";
-    }
-});
-}
 
 let logoutTimer;
 
@@ -452,10 +556,6 @@ function resetLogoutTimer() {
 
     clearTimeout(logoutTimer);
     logoutTimer = setTimeout(signOut, 30 * 60 * 1000);
-}
-const loadAppointmentsButton = document.getElementById("loadAppointments");
-if (loadAppointmentsButton) {
-    loadAppointmentsButton.addEventListener("click", displayAppointments);
 }
 
 const logoutButton = document.getElementById("logoutButton");

@@ -16,7 +16,6 @@
             <a href="#overview">Overview</a>
             <a href="#appointments">Appointments</a>
             <a href="#accounts">Manage Accounts</a>
-            <a href="#booking">Book Appointment</a>
         </nav>
 
         <button id="logoutButton" type="button">Log out</button>
@@ -109,7 +108,7 @@
                     <label for="accountEmail">Email address</label>
                     <input
                         id="accountEmail"
-                        type="tel"
+                        type="email"
                         required
                     >
 
@@ -143,6 +142,7 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Action</th>
+                            <th>Manage</th>
                         </tr>
                     </thead>
                     <tbody id="patientAccountsBody">
@@ -151,6 +151,28 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div id="editPatientContainer" hidden>
+                <h3>Edit Patient Details</h3>
+
+                <form id="editPatientForm">
+                    <input type="hidden" id="editPatientId">
+
+                    <label for="editPatientName">Patient Name</label>
+                    <input type="text" id="editPatientName" required>
+
+                    <label for="editPatientEmail">Email Address</label>
+                    <input type="email" id="editPatientEmail" required>
+
+                    <label for="editPatientPhone">Phone Number</label>
+                    <input type="tel" id="editPatientPhone" required>
+
+                    <button type="submit">Save Changes</button>
+                    <button type="button" id="cancelPatientEdit">Cancel</button>
+
+                    <p id="editPatientMessage" role="status"></p>
+                </form>
             </div>
 
             <h3>Doctor Accounts</h3>
@@ -163,6 +185,7 @@
                             <th>Speciality</th>
                             <th>Email</th>
                             <th>Action</th>
+                            <th>Manage</th>
                         </tr>
                     </thead>
                     <tbody id="doctorAccountsBody">
@@ -171,6 +194,28 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div id="editDoctorContainer" hidden>
+                <h3>Edit Doctor Details</h3>
+
+                <form id="editDoctorForm">
+                    <input type="hidden" id="editDoctorId">
+
+                    <label for="editDoctorName">Doctor Name</label>
+                    <input type="text" id="editDoctorName" required>
+
+                    <label for="editDoctorSpeciality">Speciality</label>
+                    <input type="text" id="editDoctorSpeciality" required>
+
+                    <label for="editDoctorEmail">Email Address</label>
+                    <input type="email" id="editDoctorEmail" required>
+
+                    <button type="submit">Save Changes</button>
+                    <button type="button" id="cancelDoctorEdit">Cancel</button>
+
+                    <p id="editDoctorMessage" role="status"></p>
+                </form>
             </div>
 
             <h3>Admin Accounts</h3>
@@ -214,11 +259,6 @@
 
             <p id="resetPasswordMessage" role="status"></p>
         </form>
-
-        <section id="booking" class="panel">
-            <h2>Book an Appointment</h2>
-            <p>The admin booking form will go here</p>
-        </section>
     </main>
     </div>
 

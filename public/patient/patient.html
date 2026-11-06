@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="patient.css">
+<title>Patient Dashboard</title>
+</head>
+<body>
+<!-- Header: shows who is logged in -->
+<header>
+<h2 id="loginStatus">Not logged in</h2>
+<button id="logoutBtn" hidden>Log out</button>
+</header>
+
+<nav>
+<a href="#home">Home</a>
+<a href="#appointment">Appointments</a>
+<a href="#health">Health Record</a>
+<a href="#prescriptions">Prescriptions</a>
+</nav>
+<button id="logoutButton" type="button">Log out</button>
+
+<p id="globalMessage" role="status"></p>
+
+<section id="home" class="page">
+<h2>Welcome to PrimeHealth</h2>
+<p>Welcome to your patient dashboard</p>
+</section>
+
+<section id="appointment" class="page" hidden>
+<h2>Appointments</h2>
+<!-- Form only shown to roles allowed to book (patient, admin) -->
+<form id="appointmentForm">
+
+<label for="appointmentDoctor">Doctor</label>
+<select id="appointmentDoctor" class="doctor-dropdown" required>
+<option value="">Choose a Doctor</option>
+</select>
+
+<label for="appointmentDate">Date</label>
+<input id="appointmentDate" type="date" required>
+
+<label for="appointmentTime">Time</label>
+<input id="appointmentTime" type="time" required>
+
+<button type="submit">Create Appointment</button>
+</form>
+<p id="appointmentMessage" role="status"></p>
+
+<p id="message"></p>
+<div id="appointmentList"></div>
+</section>
+
+<!-- Patient read only data -->
+<section id="health" class="page" hidden>
+<h2>View your health record</h2>
+<h3>Your details</h3>
+<div id="myDetails"></div>
+<h3>Medical history</h3>
+<div id="myRecord"></div>
+
+<h3>Clinical notes</h3>
+<div id="myClinicalNotes"></div>
+<h3>Medications and instructions</h3>
+<div id="myMedications"></div>
+<h3>Your appointments</h3>
+<div id="myAppointments"></div>
+</section>
+
+<!-- Patient: request a prescription. Doctor: review requests sent to them -->
+<section id="prescriptions" class="page" hidden>
+<h2>Prescriptions</h2>
+<form id="prescriptionForm">
+<label for="prescriptionMedication">Medication</label>
+<input id="prescriptionMedication" required>
+
+<label for="prescriptionReason">Reason</label>
+<textarea id="prescriptionReason" rows="2" required></textarea>
+
+<label for="prescriptionDoctor">Doctor</label>
+<select id="prescriptionDoctor" class="doctor-dropdown" required>
+<option value="">Choose a Doctor</option>
+</select>
+
+<button type="submit">Request prescription</button>
+</form>
+<p id="prescriptionMessage" role="status"></p>
+<div id="prescriptionList"></div>
+</section>
+
+<script src="../app.js"></script>
+<script src="patient.js"></script>
+</body>
+</html>

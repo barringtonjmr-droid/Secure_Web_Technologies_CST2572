@@ -1,0 +1,109 @@
+
+/* General page styling */
+body {
+    margin: 0;
+    background: #f3f6f8;
+    color: #24313b;
+    font-family: Arial, sans-serif;
+}
+
+/* Header */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 6%;
+    background: #176b67;
+    color: white;
+}
+
+header h2 {
+    margin: 0;
+}
+
+/* Navigation */
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 6%;
+    background: white;
+}
+
+nav a {
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #176b67;
+    text-decoration: none;
+}
+
+nav a:hover {
+    background: #e5f2f0;
+}
+
+/* Dashboard sections */
+.page[hidden] {
+    display: none !important;
+}
+
+.page:not([hidden]) {
+    max-width: 850px;
+    margin: 30px auto;
+    padding: 28px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 4px 16px #24313b18;
+}
+
+.page h2 {
+    margin-top: 0;
+    color: #176b67;
+}
+
+/* Forms and inputs */
+.page form {
+    display: grid;
+    gap: 10px;
+    max-width: 480px;
+}
+
+.page input,
+.page select,
+.page textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #b9c5cc;
+    border-radius: 6px;
+    font: inherit;
+}
+
+/* Buttons */
+button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: #176b67;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #115451;
+}
+
+/* Medical records and appointment items */
+.item {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #d9e2e6;
+    border-radius: 8px;
+    background: #fff;
+}
+
+/* Status messages */
+#globalMessage,
+#appointmentMessage {
+    color: #176b67;
+}
