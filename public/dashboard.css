@@ -1,0 +1,144 @@
+/* Shared dashboard styling - matches the main PrimeHealth site */
+
+body {
+    margin: 0;
+    background: #f3f6f8;
+    color: #24313b;
+    font-family: Arial, sans-serif;
+}
+
+/* -- Doctor dashboard -- */
+
+body > header {
+    background: #176b67;
+    color: white;
+    padding: 18px 24px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+main {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 24px;
+    background: white;
+    border-radius: 8px;
+}
+
+main h2 { color: #176b67; margin-top: 0; }
+
+/* -- Admin dashboard layout -- */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100vh;
+    padding: 24px 18px;
+    background: #176b67;
+    color: white;
+    box-sizing: border-box;
+}
+
+.sidebar h2 { margin: 0 0 4px; font-size: 20px; }
+.sidebar p { margin: 0 0 24px; font-size: 13px; opacity: 0.85; }
+
+.sidebar nav { display: flex; flex-direction: column; gap: 10px; }
+
+.sidebar nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.sidebar nav a:hover { background: #115451; }
+
+.sidebar button {
+    margin-top: 24px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: white;
+    color: #176b67;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.main-content {
+    margin-left: 220px;
+    padding: 28px 32px;
+}
+
+.main-content header { margin-bottom: 24px; }
+.main-content h1 { color: #176b67; margin: 0 0 4px; }
+.main-content header p { margin: 0; color: #6b7c85; }
+
+.main-content h2 {
+    color: #176b67;
+    margin-top: 32px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #d9e2e6;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+}
+
+.stat-card h3 { margin: 0 0 6px; font-size: 14px; color: #6b7c85; }
+.stat-card p  { margin: 0; font-size: 28px; font-weight: bold; color: #176b67; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+th, td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+th { background: #e5f2f0; color: #176b67; font-size: 14px; }
+
+/* - Buttons and inputs - */
+
+button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #176b67;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover { background: #115451; }
+
+input, select {
+    padding: 8px 10px;
+    border: 1px solid #d9e2e6;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+}
+
+/* --Small screens -- */
+
+@media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+    .sidebar { position: static; width: 100%; height: auto; }
+    .main-content { margin-left: 0; padding: 16px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+}

@@ -454,7 +454,7 @@ function resetLogoutTimer() {
     logoutTimer = setTimeout(signOut, 30 * 60 * 1000);
 }
 const loadAppointmentsButton = document.getElementById("loadAppointments");
-if (loadAppointmentsButton) {
+if (loadAppointmentsButton && typeof displayAppointments === "function") {
     loadAppointmentsButton.addEventListener("click", displayAppointments);
 }
 
