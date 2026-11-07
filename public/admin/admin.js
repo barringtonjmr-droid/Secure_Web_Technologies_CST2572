@@ -99,7 +99,7 @@ function toBase64(buffer) {
     return btoa(binary);
 }
 
-
+//Create doctor account function
 async function createDoctorAccount() {
     const message = document.getElementById("accountMessage");
 
@@ -146,7 +146,7 @@ async function createDoctorAccount() {
         if (message) {
             message.textContent = "Doctor account created successfully!";
         }
-
+        //Resets form, clears data
         document.getElementById("accountForm").reset();
 
         await loadAdminDashboard();
@@ -160,32 +160,39 @@ async function createDoctorAccount() {
     }
 }
 
-
+// Displays all patient accounts in the admin dashboard
 function displayPatientAccounts(patients) {
+
+    // Get the table body where patient accounts will be displayed
     const tbody = document.getElementById("patientAccountsBody");
     if (!tbody) return;
 
+    // Clear any existing patient rows before displaying updated data
     tbody.replaceChildren();
 
+    // Display a message if there are no patient accounts
     if (patients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
         return;
     }
-    //Adding data to patients table
+
+    // Loop through each patient and create a table row
     patients.forEach(patient => {
         const row = document.createElement("tr");
 
+        // Add the patient's ID and name to the table
         [patient.id, patient.name].forEach(value => {
             const cell = document.createElement("td");
             cell.textContent = value;
             row.appendChild(cell);
         });
 
+        // Create a delete button for each patient
         const actionCell = document.createElement("td");
-        //Delete functionality
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "Delete";
 
+        // Call deletePatients() with the selected patient's ID when clicked
         deleteButton.addEventListener("click", () => {
             deletePatients(patient.id);
         });
@@ -193,12 +200,12 @@ function displayPatientAccounts(patients) {
         actionCell.appendChild(deleteButton);
         row.appendChild(actionCell);
 
-        //Update functionality
+        // Create an edit button to allow the patient's details to be managed
         const manageCell = document.createElement("td");
-
         const editButton = document.createElement("button");
         editButton.textContent = "Edit";
 
+        // Call editPatient() with the selected patient's details when clicked
         editButton.addEventListener("click", () => {
             editPatient(patient);
         });
@@ -206,38 +213,28 @@ function displayPatientAccounts(patients) {
         manageCell.appendChild(editButton);
         row.appendChild(manageCell);
 
+        // Add the completed patient row to the table
         tbody.appendChild(row);
     });
 }
 
-
 // Opens the edit form for the selected patient and fills in their current details.
 function editPatient(patient) {
-    // Stores the patient's ID in the hidden or read-only ID field.
     document.getElementById("editPatientId").value = patient.id;
-    // Displays the patient's current name in the name input field.
     document.getElementById("editPatientName").value = patient.name;
-    // Makes the patient edit form visible.
     document.getElementById("editPatientContainer").hidden = false;
-    // Clears any previous message displayed in the edit form.
     document.getElementById("editPatientMessage").textContent = "";
 }
 
 // Opens the edit form for the selected doctor and fills in their current details.
 function editDoctor(doctor) {
-    // Stores the doctor's ID in the ID field.
     document.getElementById("editDoctorId").value = doctor.id;
-    // Displays the doctor's current name in the name input field.
     document.getElementById("editDoctorName").value = doctor.name;
-    // Displays the doctor's speciality.
     // If no speciality is available, the field is left empty.
     document.getElementById("editDoctorSpeciality").value =
         doctor.speciality || "";
-    // Displays the doctor's current email address.
     document.getElementById("editDoctorEmail").value = doctor.email;
-    // Makes the doctor edit form visible.
     document.getElementById("editDoctorContainer").hidden = false;
-    // Clears any previous message displayed in the edit form.
     document.getElementById("editDoctorMessage").textContent = "";
 }
 
@@ -262,20 +259,17 @@ function displayDoctorAccounts(doctors) {
         // If the doctor has no speciality, a dash is displayed instead.
         [doctor.id, doctor.name, doctor.speciality || "—", doctor.email]
             .forEach(value => {
-                // Creates a new table cell.
+                //Adds doctor data to table
                 const cell = document.createElement("td");
 
-                // Adds the current doctor's information as text.
                 cell.textContent = value;
 
-                // Adds the cell to the current table row.
                 row.appendChild(cell);
             });
 
         // Creates a separate table cell for the Delete button.
         const actionCell = document.createElement("td");
 
-        // Creates the Delete button.
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "Delete";
 
@@ -293,7 +287,6 @@ function displayDoctorAccounts(doctors) {
         // Creates another table cell for the Edit button.
         const manageCell = document.createElement("td");
 
-        // Creates the Edit button.
         const editButton = document.createElement("button");
         editButton.textContent = "Edit";
 
@@ -302,10 +295,7 @@ function displayDoctorAccounts(doctors) {
             editDoctor(doctor);
         });
 
-        // Adds the Edit button to its table cell.
         manageCell.appendChild(editButton);
-
-        // Adds the Edit button cell to the current table row.
         row.appendChild(manageCell);
 
         // Adds the completed doctor row to the table.
