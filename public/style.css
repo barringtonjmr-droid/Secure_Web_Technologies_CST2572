@@ -181,3 +181,137 @@ body > nav a:hover {
     font-size: 14px;
     line-height: 1.5;
 }
+/* ===================================================================
+   Habbani: home page hero treatment (criterion 5)
+   CSS only - targets #home so the other pages are unaffected.
+   =================================================================== */
+
+#home:not([hidden]) {
+    max-width: 1080px;
+    margin: 0 auto 40px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* Hero band */
+#home .home-intro {
+    padding: 56px 48px 48px;
+    border-radius: 0 0 20px 20px;
+    background: linear-gradient(135deg, #1e293b 0%, #16202f 55%, #0f172a 100%);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Soft circle for depth */
+#home .home-intro::after {
+    content: "";
+    position: absolute;
+    top: -90px;
+    right: -70px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: #ffffff14;
+}
+
+#home .home-intro h1 {
+    color: #ffffff;
+    font-size: 44px;
+    line-height: 1.15;
+    margin: 0 0 14px;
+    max-width: 18ch;
+    text-wrap: balance;
+}
+
+#home .home-intro p {
+    color: #cbd5e1;
+    font-size: 17px;
+    line-height: 1.6;
+    max-width: 56ch;
+    margin: 0;
+}
+
+/* Buttons on the dark hero */
+#home .home-actions {
+    margin-top: 28px;
+    gap: 12px;
+}
+
+#home .home-actions a {
+    padding: 14px 26px;
+    font-weight: bold;
+    transition: transform .15s ease, background .15s ease;
+}
+
+#home .home-actions a:first-child {
+    background: #ffffff;
+    color: #059669;
+}
+
+#home .home-actions a:last-child {
+    background: transparent;
+    border: 1px solid #ffffff80;
+    color: #ffffff;
+}
+
+#home .home-actions a:hover {
+    transform: translateY(-2px);
+}
+
+#home .home-actions a:last-child:hover {
+    background: #ffffff1f;
+}
+
+/* Cards below the hero */
+#home .home-options {
+    margin: 26px 0 0;
+    padding: 0 4px;
+    gap: 18px;
+}
+
+#home .home-options a {
+    flex: 1 1 260px;
+    padding: 24px;
+    border-radius: 12px;
+    background: #ffffff;
+    border-top: 3px solid #10b981;
+    box-shadow: 0 2px 10px #24313b14;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#home .home-options a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px #24313b24;
+}
+
+#home .home-options h3 {
+    margin: 0 0 6px;
+    color: #059669;
+}
+
+#home .home-options p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #5c6b74;
+}
+
+/* Privacy dropdown */
+#home .privacy-card {
+    margin: 22px 4px 0;
+    padding: 18px 22px;
+    border-radius: 12px;
+    border-left: 3px solid #10b981;
+}
+
+/* Habbani: emerald accents for the privacy dropdown on the home page */
+#home .privacy-card {
+    background: #ecfdf5;
+}
+
+#home .privacy-card summary {
+    color: #047857;
+}
